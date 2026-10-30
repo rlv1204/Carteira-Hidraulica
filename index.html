@@ -299,6 +299,69 @@ details.adv summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--fg
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-weight:600;font-size:12.5px;z-index:40;box-shadow:var(--shadow-h)}
 @media (max-width:640px){.search{flex:1 1 100%;order:5}.today-label{display:none}.ro-tag{display:none}}
 @media print{.top .btn,.strip,.tabs{display:none}}
+
+/* ---------- edição ---------- */
+.inp{border:1px solid var(--line-2);border-radius:4px;padding:5.5px 8px;background:var(--surface);min-width:0;width:100%;font-size:13px}
+.inp:focus{border-color:var(--accent);outline:0}
+.inp:disabled{opacity:.6}
+textarea.inp{resize:vertical;min-height:70px;line-height:1.45;font-family:inherit}
+select.inp{padding:5px 6px}
+.d-body > *{flex-shrink:0}
+.d-title-in{font-size:17px;font-weight:700;line-height:1.35;border:1px solid transparent;border-radius:4px;padding:3px 6px;margin-left:-7px;width:calc(100% + 7px);background:transparent;resize:none;overflow:hidden;font-family:inherit;color:inherit;min-height:2.1em}
+.d-title-in:hover:not(:disabled){border-color:var(--line-2)}
+.d-title-in:focus{border-color:var(--accent);outline:0;background:var(--surface)}
+.d-move{border:1px solid var(--line-2);border-radius:4px;padding:3px 6px;background:var(--surface);font-size:12px;font-weight:600;color:var(--fg-2);min-width:0;max-width:260px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tg{border:1px solid var(--line-2);background:var(--surface);border-radius:4px;padding:4px 9px;font-size:12px;font-weight:700;color:var(--fg-2);display:inline-flex;gap:5px;align-items:center}
+.tg:hover:not(:disabled){border-color:var(--fg-3)}
+.tg:disabled{opacity:.55;cursor:default}
+.tg.p58[aria-pressed="true"]{color:var(--p58);background:var(--p58-bg);border-color:transparent}
+.tg.p57[aria-pressed="true"]{color:var(--p57);background:var(--p57-bg);border-color:transparent}
+.tg.mop[aria-pressed="true"]{color:var(--mop);background:var(--mop-bg);border-color:transparent}
+.tg.and[aria-pressed="true"]{color:var(--and);background:var(--and-bg);border-color:transparent}
+.tg.ok[aria-pressed="true"]{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
+.tg .sq{width:12px;height:12px;border-radius:50%;border:1.5px solid currentColor;display:inline-block}
+.tg[aria-pressed="true"] .sq{background:currentColor}
+.log{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.log .row{display:flex;gap:6px;align-items:center}
+.log input[type=date]{width:auto;flex:none}
+.fld{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fld > span{font-size:11.5px;font-weight:600;color:var(--fg-2)}
+.fld .ro{font-weight:600;padding:5.5px 0}
+.due-row{display:flex;gap:4px;align-items:center}
+.due-row .inp{flex:1}
+.x-btn{border:0;background:transparent;color:var(--fg-3);padding:3px;border-radius:3px;display:inline-grid;place-items:center}
+.x-btn:hover:not(:disabled){color:var(--late);background:var(--late-bg)}
+.ref .x-btn{padding:1px;margin-left:2px}
+.ref-copy{border:0;background:transparent;color:inherit;padding:0;display:inline-flex;gap:5px;align-items:baseline;font-size:12px}
+.ref-copy b{font-weight:700;color:var(--fg-2)}
+.add-row{display:flex;gap:6px;align-items:center;margin-top:8px}
+.add-row select{flex:none;width:auto}
+.ck div .x-btn{margin-left:auto;opacity:0}
+.ck div:hover .x-btn,.ck div .x-btn:focus{opacity:1}
+.ck .box{flex:none;width:16px;height:16px;border-radius:3px;border:1.5px solid var(--fg-3);margin-top:2px;display:grid;place-items:center;color:var(--on-accent);background:transparent;padding:0}
+.ck .on .box{background:var(--accent);border-color:var(--accent)}
+.ck .box:disabled{cursor:default}
+.raw-link{border:0;background:transparent;color:var(--accent-strong);font-weight:600;font-size:12px;padding:0}
+.d-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.confirm-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--late-bg);border:1px solid var(--late-bd);color:var(--late);border-radius:6px;padding:8px 10px;font-weight:600;font-size:12.5px}
+.col-add{margin-left:6px;border:0;background:var(--surface);box-shadow:var(--shadow);border-radius:4px;width:24px;height:24px;display:grid;place-items:center;color:var(--accent-strong);flex:none;padding:0}
+.col-add:hover{box-shadow:var(--shadow-h)}
+.col-late + .col-add{margin-left:6px}
+.col-head .col-late{margin-left:auto}
+.col.drop{background:var(--accent-soft);outline:2px dashed var(--accent);outline-offset:-2px}
+.card.dragging{opacity:.4}
+.card[draggable="true"]{cursor:grab}
+.ring{padding:0;background:transparent}
+button.ring:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+button.ring.ok:hover{background:var(--accent)}
+.toast{display:flex;gap:12px;align-items:center}
+.toast button{border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline;padding:0}
+.toast.err{background:var(--late);color:var(--on-late)}
+.ro-banner{margin:10px 16px 0;border-radius:6px;padding:8px 12px;font-size:12.5px;font-weight:600;background:var(--soon-bg);color:var(--soon);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
+@media (max-width:520px){.form-grid{grid-template-columns:minmax(0,1fr)}}
+.req{color:var(--late)}
 </style>
 </head>
 <body>
@@ -308,13 +371,15 @@ details.adv summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--fg
       <div class="tile" aria-hidden="true">CH</div>
       <div class="plan-name">
         <h1>Carteira Hidráulica</h1>
-        <p><span class="sync" id="sync"><i></i><span id="syncTxt">Conectando…</span></span></p>
+        <p><span class="sync off" id="sync"><i></i><span id="syncTxt">Conectando…</span></span></p>
       </div>
       <div class="spacer"></div>
       <label class="search" title="Atalho: /">
         <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         <input id="q" type="search" placeholder="Buscar tarefa, nota, RC, pessoa…" autocomplete="off" aria-label="Buscar">
       </label>
+      <button class="btn primary" id="btnNew" type="button" data-act="new" title="Nova tarefa (N)" hidden>
+        <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>Nova tarefa</button>
       <button class="btn" id="btnRefresh" type="button" title="Atualizar agora (R)">
         <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Atualizar</button>
       <a class="btn" id="btnTrello" href="https://trello.com/b/7dtAJCuF" target="_blank" rel="noopener noreferrer" title="Abrir o quadro no Trello">
@@ -331,7 +396,7 @@ details.adv summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--fg
         <button class="tab" role="tab" data-view="grade">Grade</button>
         <button class="tab" role="tab" data-view="lembretes">Lembretes</button>
       </nav>
-      <span class="ro-tag"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Somente leitura · edite no Trello</span>
+      <span class="ro-tag" id="modeTag"></span>
     </div>
   </header>
   <div id="strip"></div>
@@ -353,16 +418,17 @@ const API = 'https://api.trello.com/1';
 const REFRESH_MS = 5 * 60 * 1000;
 const PLATS = [{id:'P-58', cls:'p58'}, {id:'P-57', cls:'p57'}, {id:'MOP-1', cls:'mop'}];
 const URG = 'Urgente amanhã';
+const PRIORIDADES = [URG, 'Urgente', 'Importante', 'Média', 'Baixa'];
 /* etiquetas do quadro (sem nome): a cor define o papel */
 const COLOR_ROLE = {green:'P-58', blue:'P-57', purple:'MOP-1', red:'urg', yellow:'and'};
 const REF_TYPES = ['Nota','Ordem','RC','PPG','Pedido','FWO','UF','RTI','RTA','ST','RT','NM','PTM','Oportunidade','Outro'];
 const LIST_DESC = {
   'tarefas pendentes': 'Você precisa fazer a tratativa: GM, ST/SERTEC, PQS, RTA, RA, nota, cotação ou cobrança.',
   'aguardando retorno': 'Depende de resposta: aprovação, cotação, análise técnica ou medição.',
-  'aguardando compra/contratação': 'Sem pedido fechado: RC, PPG, PQS, contrato global, PATEC ou RA.',
+  'aguardando compra/contratacao': 'Sem pedido fechado: RC, PPG, PQS, contrato global, PATEC ou RA.',
   'aguardando entrega / reparo externo': 'Pedido feito ou item em reparo externo; material em trânsito.',
-  'programar execução': 'Material disponível; falta programação ou embarque.',
-  'aguardando conclusão': 'Encaminhado; depende de outra pessoa para concluir.'
+  'programar execucao': 'Material disponível; falta programação ou embarque.',
+  'aguardando conclusao': 'Encaminhado; depende de outra pessoa para concluir.'
 };
 
 /* ---------- armazenamento local (só neste navegador) ---------- */
@@ -375,15 +441,17 @@ const ui = {
   q: '', quick: null, waiting: '',
   plats: new Set(Array.isArray(saved.plats) ? saved.plats : PLATS.map(p => p.id)),
   noLabel: saved.noLabel !== false,
-  open: null, doneOpen: new Set(), sort: {key:'due', dir:1},
-  setup: false
+  open: null, newTask: null, raw: false, confirmArchive: false, dirty: false,
+  doneOpen: new Set(), sort: {key:'due', dir:1}, setup: false, setupMsg: null
 };
 function persistUi(){ save(UI_STORE, {view: ui.view, plats: [...ui.plats], noLabel: ui.noLabel}); }
 try { const th = localStorage.getItem('ch.dash.theme'); if (th) document.documentElement.dataset.theme = th; } catch(e){}
 
 /* ---------- estado dos dados ---------- */
-let board = null;      // {name, url, lists:[{id,name,pos,idx}], tasks:[...]}
-let lastOk = null, loading = false, lastErr = null, timer = null;
+let board = null;      // {name, url, lists, tasks, labelByRole}
+let lastOk = null, loading = false, again = false, lastErr = null, timer = null, saving = 0;
+let perm = {checked: false, write: false};
+const canWrite = () => perm.checked ? perm.write : false;
 
 /* ---------- datas ---------- */
 const pad = n => String(n).padStart(2, '0');
@@ -394,6 +462,7 @@ function diffDays(iso){ return dayNum(iso) - dayNum(TODAY); }
 function addDays(iso, n){ const t = new Date((dayNum(iso) + n) * 864e5); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`; }
 function fmt(iso){ if (!iso) return ''; const [y,m,d] = iso.split('-'); return y === TODAY.slice(0,4) ? `${d}/${m}` : `${d}/${m}/${y.slice(2)}`; }
 function fmtLong(iso){ if (!iso) return '—'; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
+const ddmm = iso => `${iso.slice(8,10)}/${iso.slice(5,7)}`;
 const WD = ['dom','seg','ter','qua','qui','sex','sáb'];
 function weekday(iso){ return WD[new Date(dayNum(iso) * 864e5).getUTCDay()]; }
 function noteISO(d, m){
@@ -410,9 +479,11 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const normRef = s => norm(s).replace(/[^a-z0-9]/g, '');
 const plural = (n, s, p) => `${n} ${n === 1 ? s : p}`;
-function toast(msg){
-  const r = $('#toastRoot'); r.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`;
-  clearTimeout(toast.t); toast.t = setTimeout(() => { r.innerHTML = ''; }, 2200);
+function toast(msg, opts = {}){
+  const r = $('#toastRoot');
+  r.innerHTML = `<div class="toast ${opts.err ? 'err' : ''}" role="status"><span>${esc(msg)}</span>${opts.action ? `<button type="button" data-toast>${esc(opts.action.label)}</button>` : ''}</div>`;
+  if (opts.action) r.querySelector('[data-toast]').addEventListener('click', () => { r.innerHTML = ''; clearTimeout(toast.t); opts.action.fn(); });
+  clearTimeout(toast.t); toast.t = setTimeout(() => { r.innerHTML = ''; }, opts.action ? 7000 : opts.err ? 5000 : 2200);
 }
 const ICON = {
   cal: '<svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" stroke-width="1.6"/></svg>',
@@ -423,34 +494,51 @@ const ICON = {
   chev: '<svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   tick: '<svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   ext: '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2.5h4.5V7M13.5 2.5L7 9M11.5 9.5v3.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1H7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  x: '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+  x: '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  xs: '<svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  plus: '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
 };
 
-/* ---------- leitura da descrição do cartão ---------- */
+/* ---------- descrição do cartão: leitura e escrita no formato da carteira ---------- */
 const FIELD_RE = /^\*\*\s*(Aguardando|Refs|Prioridade|Criada em)\s*:\s*\*\*\s*(.*)$/i;
 const HIST_RE = /^\*\*\s*Hist[oó]rico\s*\*\*\s*$/i;
 const MOVE_RE = /^(\d{1,2})\/(\d{1,2})\s*-\s*Movida\s*:/i;
-function parseDesc(desc){
-  const out = {waiting:'', refs:[], priority:'', created:null, notes:[]};
+const FKEY = {aguardando:'waiting', refs:'refs', prioridade:'priority', 'criada em':'created'};
+function splitDesc(desc){
   const lines = String(desc || '').split(/\r?\n/);
-  let h = lines.findIndex(l => HIST_RE.test(l.trim()));
-  lines.forEach((raw, i) => {
-    const l = raw.trim(); if (!l) return;
-    if (h >= 0 && i > h){ out.notes.push(l); return; }
-    if (i === h) return;
-    const m = FIELD_RE.exec(l);
-    if (m){
-      const k = m[1].toLowerCase(), v = m[2].trim();
-      if (k === 'aguardando') out.waiting = v;
-      else if (k === 'prioridade') out.priority = v;
-      else if (k === 'criada em'){ const d = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(v); if (d) out.created = `${d[3]}-${pad(d[2])}-${pad(d[1])}`; }
-      else if (k === 'refs') out.refs = v.split(/\s*·\s*/).filter(Boolean).map(r => {
-        const sp = r.indexOf(' '); const t = sp > 0 ? r.slice(0, sp) : '';
-        return REF_TYPES.includes(t) ? {tipo: t, num: r.slice(sp + 1).trim()} : {tipo: '', num: r};
-      });
-    } else if (h < 0) out.notes.push(l);
+  const h = lines.findIndex(l => HIST_RE.test(l.trim()));
+  const head = h >= 0 ? lines.slice(0, h) : lines;
+  const f = {waiting:'', refs:'', priority:'', created:''}, extra = [];
+  head.forEach(raw => { const m = FIELD_RE.exec(raw.trim()); if (m) f[FKEY[m[1].toLowerCase()]] = m[2].trim(); else if (raw.trim()) extra.push(raw.trimEnd()); });
+  return {f, extra, hist: h >= 0 ? lines.slice(h + 1) : []};
+}
+function joinDesc(s){
+  const out = [];
+  if (s.f.waiting) out.push(`**Aguardando:** ${s.f.waiting}`);
+  if (s.f.refs) out.push(`**Refs:** ${s.f.refs}`);
+  if (s.f.priority && s.f.priority !== 'Média') out.push(`**Prioridade:** ${s.f.priority}`);
+  if (s.f.created) out.push(`**Criada em:** ${s.f.created}`);
+  out.push(...s.extra);
+  const hist = s.hist.slice();
+  while (hist.length && !hist[0].trim()) hist.shift();
+  while (hist.length && !hist[hist.length - 1].trim()) hist.pop();
+  if (hist.length) out.push('', '**Histórico**', ...hist);
+  return out.join('\n').trim();
+}
+const editDesc = (desc, fn) => { const s = splitDesc(desc); fn(s); return joinDesc(s); };
+const histLine = (text, iso) => `${ddmm(iso || TODAY)} - ${text}`;
+function parseRefs(str){
+  return String(str || '').split(/\s*·\s*/).map(r => r.trim()).filter(Boolean).map(r => {
+    const sp = r.indexOf(' '); const t = sp > 0 ? r.slice(0, sp) : '';
+    return REF_TYPES.includes(t) ? {tipo: t, num: r.slice(sp + 1).trim()} : {tipo: '', num: r};
   });
-  return out;
+}
+const refStr = r => (r.tipo ? r.tipo + ' ' : '') + r.num;
+function parseDesc(desc){
+  const s = splitDesc(desc);
+  const c = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s.f.created);
+  const notes = s.hist.length ? s.hist.map(l => l.trim()).filter(Boolean) : s.extra.map(l => l.trim()).filter(Boolean);
+  return {waiting: s.f.waiting, refs: parseRefs(s.f.refs), priority: s.f.priority, created: c ? `${c[3]}-${pad(c[2])}-${pad(c[1])}` : null, notes};
 }
 function labelRole(l){
   const n = norm(l.name).replace(/\s/g, '');
@@ -464,26 +552,30 @@ function labelRole(l){
   }
   return COLOR_ROLE[l.color] || 'other';
 }
+function autoPlats(s){ const x = String(s || '').replace(/\s/g, ''); return PLATS.map(p => p.id).filter(p => new RegExp(p.replace('-', '-?'), 'i').test(x)); }
 
 /* ---------- monta o modelo a partir do Trello ---------- */
 function build(b){
   const labels = new Map((b.labels || []).map(l => [l.id, l]));
+  const labelByRole = {};
+  (b.labels || []).forEach(l => { const r = labelRole(l); if (r !== 'other' && !labelByRole[r]) labelByRole[r] = l.id; });
   const lists = (b.lists || []).slice().sort((x, y) => x.pos - y.pos).map((l, i) => ({id: l.id, name: l.name, idx: i + 1}));
   const listIds = new Set(lists.map(l => l.id));
   const cks = new Map();
   (b.checklists || []).slice().sort((x, y) => x.pos - y.pos).forEach(c => {
     if (!cks.has(c.idCard)) cks.set(c.idCard, []);
-    cks.get(c.idCard).push({name: c.name, items: (c.checkItems || []).slice().sort((x, y) => x.pos - y.pos).map(i => ({name: i.name, on: i.state === 'complete'}))});
+    cks.get(c.idCard).push({id: c.id, name: c.name, items: (c.checkItems || []).slice().sort((x, y) => x.pos - y.pos).map(i => ({id: i.id, name: i.name, on: i.state === 'complete'}))});
   });
-  const tasks = (b.cards || []).filter(c => listIds.has(c.idList)).map(c => {
+  const tasks = (b.cards || []).filter(c => listIds.has(c.idList) && !c.closed).map(c => {
     const p = parseDesc(c.desc);
     const roles = (c.idLabels || []).map(id => labels.get(id)).filter(Boolean).map(l => ({l, r: labelRole(l)}));
     const checklists = cks.get(c.id) || [];
     const items = checklists.flatMap(x => x.items);
     return {
-      id: c.id, title: c.name, url: c.shortUrl || c.url, listId: c.idList, pos: c.pos,
-      due: c.due ? isoLocal(new Date(c.due)) : null, done: !!c.dueComplete,
+      id: c.id, title: c.name, url: c.shortUrl || c.url, listId: c.idList, pos: c.pos, rawDesc: c.desc || '',
+      due: c.due ? isoLocal(new Date(c.due)) : null, done: !!c.dueComplete, labelIds: c.idLabels || [],
       plats: roles.filter(x => PLATS.some(p => p.id === x.r)).map(x => x.r),
+      urgLabel: roles.some(x => x.r === 'urg'),
       urg: roles.some(x => x.r === 'urg') || p.priority.toLowerCase().startsWith('urgente amanh'),
       and: roles.some(x => x.r === 'and'),
       other: roles.filter(x => x.r === 'other').map(x => x.l.name || x.l.color),
@@ -492,7 +584,7 @@ function build(b){
       lastAct: c.dateLastActivity
     };
   });
-  return {name: b.name, url: b.shortUrl || b.url, lists, tasks};
+  return {name: b.name, url: b.shortUrl || b.url, lists, tasks, labelByRole};
 }
 
 /* ---------- regras de situação ---------- */
@@ -517,11 +609,13 @@ function lastUpdate(t){ return t.notes[0] || ''; }
 function listOf(t){ return board.lists.find(l => l.id === t.listId) || {name: '—', idx: 0}; }
 const isPend = l => /pendente/i.test(l.name);
 const isRet = l => /aguardando retorno/i.test(l.name);
+const T = id => board && board.tasks.find(t => t.id === id);
+const waitNames = () => [...new Set(board.tasks.filter(t => t.waiting).map(t => t.waiting.trim()))].sort((a, b) => a.localeCompare(b, 'pt'));
 
 /* ---------- filtros ---------- */
 function baseMatch(t){
   if (ui.q){
-    const refs = t.refs.map(r => r.tipo + ' ' + r.num).join(' ');
+    const refs = t.refs.map(refStr).join(' ');
     const hay = norm([t.title, t.notes.join(' '), refs, t.waiting, t.priority, t.checklists.flatMap(c => c.items.map(i => i.name)).join(' '), t.plats.join(' '), listOf(t).name].join(' '));
     const hayN = normRef(hay);
     if (!norm(ui.q).split(/\s+/).filter(Boolean).every(w => hay.includes(w) || (normRef(w).length >= 4 && hayN.includes(normRef(w))))) return false;
@@ -589,16 +683,21 @@ function cardHTML(t, opts = {}){
     if (d !== null) foot.push(`<span class="meta since ${d >= 14 ? 'long' : ''}" title="Tempo nesta etapa">${ICON.clock}há ${plural(d, 'dia', 'dias')}</span>`);
   }
   if (t.ckTotal) foot.push(`<span class="meta" title="Checklist">${ICON.ck}<span class="num">${t.ckDone}/${t.ckTotal}</span></span>`);
-  if (t.refs.length) foot.push(`<span class="meta" title="${esc(t.refs.map(r => (r.tipo ? r.tipo + ' ' : '') + r.num).join(' · '))}">${ICON.ref}<span class="num">${t.refs.length}</span></span>`);
+  if (t.refs.length) foot.push(`<span class="meta" title="${esc(t.refs.map(refStr).join(' · '))}">${ICON.ref}<span class="num">${t.refs.length}</span></span>`);
   if (t.priority && !/amanh/i.test(t.priority) && /urgente|importante/i.test(t.priority)) foot.push(`<span class="meta" style="color:var(--late);font-weight:700">${esc(t.priority)}</span>`);
   const tags = platLabels(t) + (opts.next ? '<span class="next-tag">Próxima</span>' : '');
-  return `<button type="button" class="card ${cls} ${opts.next ? 'next' : ''}" data-open="${esc(t.id)}">
+  const w = canWrite();
+  const ringTitle = t.done ? 'Concluída — clique para reabrir' : (w ? 'Marcar como concluída' : (t.and ? 'Em andamento' : 'Não iniciada'));
+  const ring = w
+    ? `<button type="button" class="ring ${t.done ? 'ok' : t.and ? 'and' : ''}" data-ring="${esc(t.id)}" title="${ringTitle}" aria-label="${ringTitle}">${t.done ? ICON.tick : ''}</button>`
+    : `<span class="ring ${t.done ? 'ok' : t.and ? 'and' : ''}" title="${ringTitle}">${t.done ? ICON.tick : ''}</span>`;
+  return `<article class="card ${cls} ${opts.next ? 'next' : ''}" data-open="${esc(t.id)}" tabindex="0" role="button" aria-label="${esc(t.title)}" ${w ? 'draggable="true"' : ''}>
     ${tags ? `<div class="labels">${tags}</div>` : ''}
-    <div class="c-main"><span class="ring ${t.done ? 'ok' : t.and ? 'and' : ''}" title="${t.done ? 'Concluída' : t.and ? 'Em andamento' : 'Não iniciada'}">${t.done ? ICON.tick : ''}</span><div class="c-title">${esc(t.title)}</div></div>
+    <div class="c-main">${ring}<div class="c-title">${esc(t.title)}</div></div>
     ${flag}
     ${lastUpdate(t) ? `<div class="c-note">${esc(lastUpdate(t))}</div>` : ''}
     <div class="c-foot">${foot.join('')}</div>
-  </button>`;
+  </article>`;
 }
 
 /* ---------- faixa de filtros ---------- */
@@ -633,16 +732,17 @@ function renderStrip(){
 
 /* ---------- visão Quadro ---------- */
 function renderBoard(){
+  const w = canWrite();
   const cols = board.lists.map(l => {
     const all = board.tasks.filter(t => t.listId === l.id && matches(t));
     const open = all.filter(t => !t.done).sort(isPend(l) ? byQueue : byDue);
     const done = all.filter(t => t.done);
     const late = open.filter(t => dueState(t) === 'late').length;
     const nextId = isPend(l) && open.length ? open[0].id : null;
-    const desc = LIST_DESC[norm(l.name)] || LIST_DESC[l.name.toLowerCase()] || '';
+    const desc = LIST_DESC[norm(l.name)] || '';
     const doneOpen = ui.doneOpen.has(l.id);
-    return `<section class="col" aria-label="${esc(l.name)}">
-      <div class="col-head"><span class="col-step">${l.idx}</span><h2 class="col-title" title="${esc(l.name)}">${esc(l.name)}</h2><span class="col-count num">${open.length}</span>${late ? `<span class="col-late num">${late} atras.</span>` : ''}</div>
+    return `<section class="col" data-list="${esc(l.id)}" aria-label="${esc(l.name)}">
+      <div class="col-head"><span class="col-step">${l.idx}</span><h2 class="col-title" title="${esc(l.name)}">${esc(l.name)}</h2><span class="col-count num">${open.length}</span>${late ? `<span class="col-late num">${late} atras.</span>` : ''}${w ? `<button type="button" class="col-add" data-act="new" data-list="${esc(l.id)}" title="Nova tarefa nesta etapa" aria-label="Nova tarefa em ${esc(l.name)}" ${late ? '' : 'style="margin-left:auto"'}>${ICON.plus}</button>` : ''}</div>
       ${desc ? `<div class="col-desc">${esc(desc)}</div>` : ''}
       <div class="cards">
         ${open.map(t => cardHTML(t, {next: t.id === nextId})).join('') || '<div class="col-empty">Nada aqui com os filtros atuais.</div>'}
@@ -686,13 +786,13 @@ function renderResumo(){
       ${kpi('today', 'today', 'Vencem hoje', fmtLong(TODAY))}
       ${kpi('week', '', 'Próximos 7 dias', 'até ' + fmt(addDays(TODAY, 7)))}
       ${kpi('urg', 'urg', 'Urgentes', 'etiqueta vermelha')}
-      ${kpi('none', '', 'Sem lembrete', 'sem data no Trello')}
+      ${kpi('none', '', 'Sem lembrete', 'sem data definida')}
     </div>
     <div class="panels">
       <section class="panel"><h2>Por etapa</h2><p class="sub">Tarefas abertas em cada lista do quadro.</p>${legend}${rows(byList, maxL)}</section>
       <section class="panel"><h2>Por plataforma</h2><p class="sub">Clique para ver só a plataforma no quadro.</p>${legend}${rows(byPlat, maxP)}</section>
       <section class="panel"><h2>Aguardando quem</h2><p class="sub">De quem as tarefas abertas dependem. Clique para filtrar.</p>${byWait.length ? legend + rows(byWait, maxW) : '<div class="empty">Nenhuma tarefa com "Aguardando" preenchido.</div>'}</section>
-      <section class="panel"><h2>Há mais tempo na etapa</h2><p class="sub">Desde a última mudança de lista registrada no histórico (ou a criação).</p>
+      <section class="panel"><h2>Há mais tempo na etapa</h2><p class="sub">Desde a última mudança de etapa registrada no histórico (ou a criação).</p>
         <div class="stale">${stale.map(({t, d}) => `<button type="button" class="srow" data-open="${esc(t.id)}"><span class="d ${d >= 30 ? 'since long' : ''}">${d}<small>dias</small></span><span><span class="t">${esc(t.title)}</span><br><span class="s">${esc(listOf(t).name)}${t.waiting ? ' · aguardando ' + esc(t.waiting) : ''}${t.plats.length ? ' · ' + esc(t.plats.join(', ')) : ''}</span></span></button>`).join('') || '<div class="empty">Sem dados.</div>'}</div>
       </section>
     </div>
@@ -736,71 +836,129 @@ function renderLembretes(){
   return `<div class="scroll"><div class="rem">${groups.filter(g => g[2].length).map(([cls, name, arr]) => `<section><h2 class="${cls}">${name} <span class="n">${arr.length}</span></h2><div class="rlist">${arr.map(item).join('')}</div></section>`).join('') || '<div class="empty">Nenhuma tarefa com os filtros atuais.</div>'}</div></div>`;
 }
 
-/* ---------- painel de detalhes ---------- */
+/* ---------- painel de detalhes (com edição) ---------- */
 function renderDrawer(){
   const root = $('#drawerRoot');
-  const t = ui.open && board ? board.tasks.find(x => x.id === ui.open) : null;
+  if (ui.newTask && board && !ui.setup){ renderNewTask(); return; }
+  const t = ui.open && board && !ui.setup ? T(ui.open) : null;
   if (!t){ root.innerHTML = ''; return; }
-  const s = visState(t), l = listOf(t), since = stageSince(t), d = daysSince(since);
+  const prevBody = root.querySelector('.d-body'), keepTop = prevBody && prevBody.dataset.id === t.id ? prevBody.scrollTop : 0;
+  const w = canWrite(), dis = w ? '' : 'disabled';
+  const s = visState(t), l = listOf(t), d = daysSince(stageSince(t));
   let banner = '';
   if (!t.done && s === 'late') banner = `<div class="d-banner late">${esc(relText(t))} (lembrete ${esc(fmtLong(t.due))})</div>`;
-  else if (!t.done && t.urg) banner = `<div class="d-banner urg">Urgente${t.priority ? ' · ' + esc(t.priority) : ''}</div>`;
+  else if (!t.done && t.urg) banner = `<div class="d-banner urg">${esc(/^urgente/i.test(t.priority) ? t.priority : 'Urgente')}</div>`;
   else if (!t.done && s === 'today') banner = `<div class="d-banner today">Vence hoje</div>`;
-  const f = (label, v) => `<div class="f"><span>${label}</span><div>${v}</div></div>`;
+  const prio = t.priority || 'Média';
+  const prioOpts = PRIORIDADES.includes(prio) ? PRIORIDADES : [...PRIORIDADES, prio];
   root.innerHTML = `<div class="scrim" data-close></div>
   <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
-    <div class="d-head"><span class="col-step">${l.idx}</span><span class="bucket-name">${esc(l.name)}</span><span class="spacer"></span>
-      <a class="btn" href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">${ICON.ext}Abrir no Trello</a>
+    <div class="d-head"><span class="col-step">${l.idx}</span>
+      <select class="d-move" data-act="move" aria-label="Etapa" ${dis}>${board.lists.map(x => `<option value="${esc(x.id)}" ${x.id === t.listId ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+      <span class="spacer"></span>
+      <a class="btn" href="${esc(t.url)}" target="_blank" rel="noopener noreferrer" title="Abrir este cartão no Trello">${ICON.ext}Trello</a>
       <button type="button" class="btn icon ghost" data-close aria-label="Fechar">${ICON.x}</button></div>
-    <div class="d-body">
-      ${t.plats.length || t.other.length ? `<div class="labels">${platLabels(t)}</div>` : ''}
-      <h2 class="d-title" id="dTitle">${esc(t.title)}</h2>
+    <div class="d-body" data-id="${esc(t.id)}">
+      <textarea class="d-title-in" id="dTitle" data-act="title" rows="1" aria-label="Título" ${dis}>${esc(t.title)}</textarea>
       ${banner}
+      <div class="acts">
+        <button type="button" class="tg ok" data-act="done" aria-pressed="${t.done}" ${dis}><span class="sq"></span>${t.done ? 'Concluída' : 'Concluir'}</button>
+        <button type="button" class="tg and" data-act="and" aria-pressed="${t.and}" ${dis}><span class="sq"></span>Em andamento</button>
+        <span class="sep" style="width:1px;height:18px;background:var(--line-2)"></span>
+        ${PLATS.map(p => `<button type="button" class="tg ${p.cls}" data-act="plat" data-role="${p.id}" aria-pressed="${t.plats.includes(p.id)}" ${dis}>${p.id}</button>`).join('')}
+      </div>
+      ${w ? `<div class="log">
+        <label class="sec-label" for="logTxt">Registrar andamento</label>
+        <div class="row"><input class="inp" id="logTxt" placeholder="Ex.: Enviado e-mail cobrando a cotação" autocomplete="off" maxlength="600">
+        <input class="inp" id="logDate" type="date" value="${TODAY}" aria-label="Data do registro">
+        <button type="button" class="btn primary" data-act="log">Registrar</button></div>
+      </div>` : ''}
       <div class="fields">
-        ${f('Lembrete', t.due ? `${esc(fmtLong(t.due))} <span style="color:var(--fg-2);font-weight:500">(${weekday(t.due)})</span>` : '—')}
-        ${f('Aguardando', esc(t.waiting) || '—')}
-        ${f('Situação', t.done ? 'Concluída' : t.and ? 'Em andamento' : 'Não iniciada')}
-        ${f('Prioridade', esc(t.priority) || (t.urg ? 'Urgente' : 'Média'))}
-        ${f('Criada em', esc(fmtLong(t.created)))}
-        ${f('Na etapa', d === null ? '—' : `${plural(d, 'dia', 'dias')}`)}
+        <div class="fld"><span>Lembrete</span><div class="due-row"><input class="inp" type="date" data-act="due" value="${t.due || ''}" aria-label="Lembrete" ${dis}>${t.due && w ? `<button type="button" class="x-btn" data-act="due-clear" title="Tirar lembrete" aria-label="Tirar lembrete">${ICON.xs}</button>` : ''}</div></div>
+        <div class="fld"><span>Aguardando</span><input class="inp" data-act="waiting" list="waitList" value="${esc(t.waiting)}" placeholder="—" aria-label="Aguardando" ${dis}></div>
+        <div class="fld"><span>Prioridade</span><select class="inp" data-act="prio" aria-label="Prioridade" ${dis}>${prioOpts.map(p => `<option ${p === prio ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></div>
+        <div class="fld"><span>Criada em</span><div class="ro">${esc(fmtLong(t.created))}</div></div>
+        <div class="fld"><span>Na etapa</span><div class="ro">${d === null ? '—' : plural(d, 'dia', 'dias')}</div></div>
+        <div class="fld"><span>Situação</span><div class="ro">${t.done ? 'Concluída' : t.and ? 'Em andamento' : 'Não iniciada'}</div></div>
       </div>
-      ${t.refs.length ? `<div><div class="sec-label">Referências <span class="fine">· clique para copiar o número</span></div><div class="refs" style="margin-top:6px">${t.refs.map(r => `<button type="button" class="ref" data-copy="${esc(r.num)}">${r.tipo ? `<b>${esc(r.tipo)}</b>` : ''}<span class="num">${esc(r.num)}</span></button>`).join('')}</div></div>` : ''}
-      ${t.checklists.map(c => `<div><div class="sec-label">${esc(c.name)} <span class="num">${c.items.filter(i => i.on).length}/${c.items.length}</span></div><div class="ck">${c.items.map(i => `<div class="${i.on ? 'on' : ''}"><i>${i.on ? ICON.tick : ''}</i><span>${esc(i.name)}</span></div>`).join('')}</div></div>`).join('')}
-      <div><div class="sec-label">Histórico</div>
-        ${t.notes.length ? `<div class="hist">${t.notes.map(n => { const m = /^(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\s*[-–]\s*(.*)$/.exec(n); const mv = MOVE_RE.test(n); return `<div class="${mv ? 'mv' : ''}">${m ? `<b>${esc(m[1])}</b>${esc(m[2])}` : esc(n)}</div>`; }).join('')}</div>` : '<div class="fine" style="margin-top:6px">Sem registros.</div>'}
+      <datalist id="waitList">${waitNames().map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <div><div class="sec-label">Referências ${t.refs.length ? '<span class="fine">· clique para copiar o número</span>' : ''}</div>
+        ${t.refs.length ? `<div class="refs" style="margin-top:6px">${t.refs.map(r => `<span class="ref"><button type="button" class="ref-copy" data-copy="${esc(r.num)}" title="Copiar ${esc(r.num)}">${r.tipo ? `<b>${esc(r.tipo)}</b>` : ''}<span class="num">${esc(r.num)}</span></button>${w ? `<button type="button" class="x-btn" data-act="ref-rm" data-ref="${esc(refStr(r))}" title="Remover" aria-label="Remover ${esc(refStr(r))}">${ICON.xs}</button>` : ''}</span>`).join('')}</div>` : '<div class="fine" style="margin-top:4px">Nenhuma.</div>'}
+        ${w ? `<div class="add-row"><select class="inp" id="refTipo" aria-label="Tipo">${REF_TYPES.map(x => `<option>${x}</option>`).join('')}</select><input class="inp" id="refNum" placeholder="Número" autocomplete="off"><button type="button" class="btn" data-act="ref-add">Adicionar</button></div>` : ''}
       </div>
-      <p class="fine">Última atividade no Trello: ${t.lastAct ? esc(new Date(t.lastAct).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'})) : '—'}</p>
+      <div><div class="sec-label">Checklist ${t.ckTotal ? `<span class="num">${t.ckDone}/${t.ckTotal}</span>` : ''}</div>
+        ${t.checklists.map(c => `${t.checklists.length > 1 ? `<div class="fine" style="margin-top:6px">${esc(c.name)}</div>` : ''}<div class="ck">${c.items.map(i => `<div class="${i.on ? 'on' : ''}"><button type="button" class="box" data-act="ck" data-item="${esc(i.id)}" data-on="${i.on}" aria-label="${i.on ? 'Desmarcar' : 'Marcar'}: ${esc(i.name)}" ${dis}>${i.on ? ICON.tick : ''}</button><span>${esc(i.name)}</span>${w ? `<button type="button" class="x-btn" data-act="ck-rm" data-cl="${esc(c.id)}" data-item="${esc(i.id)}" title="Remover item" aria-label="Remover ${esc(i.name)}">${ICON.xs}</button>` : ''}</div>`).join('')}</div>`).join('')}
+        ${!t.ckTotal && !w ? '<div class="fine" style="margin-top:4px">Sem itens.</div>' : ''}
+        ${w ? `<div class="add-row"><input class="inp" id="ckNew" placeholder="Novo item do checklist" autocomplete="off"><button type="button" class="btn" data-act="ck-add">Adicionar</button></div>` : ''}
+      </div>
+      <div><div class="row" style="justify-content:space-between"><span class="sec-label">Histórico</span>${w ? `<button type="button" class="raw-link" data-act="raw">${ui.raw ? 'Cancelar edição' : 'Editar texto completo'}</button>` : ''}</div>
+        ${ui.raw && w ? `<textarea class="inp" id="rawTxt" rows="12" style="margin-top:6px;font-family:ui-monospace,Consolas,monospace;font-size:12px">${esc(t.rawDesc)}</textarea>
+          <div class="row" style="margin-top:6px"><button type="button" class="btn primary" data-act="raw-save">Salvar texto</button><span class="fine">Formato: campos em **negrito** no topo e o histórico abaixo de **Histórico**, mais recente primeiro.</span></div>`
+        : t.notes.length ? `<div class="hist">${t.notes.map(n => { const m = /^(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\s*[-–]\s*(.*)$/.exec(n); const mv = MOVE_RE.test(n); return `<div class="${mv ? 'mv' : ''}">${m ? `<b>${esc(m[1])}</b>${esc(m[2])}` : esc(n)}</div>`; }).join('')}</div>` : '<div class="fine" style="margin-top:6px">Sem registros.</div>'}
+      </div>
+      ${w ? (ui.confirmArchive ? `<div class="confirm-box">Arquivar esta tarefa? Ela sai do painel (dá para restaurar no Trello).<button type="button" class="btn" data-act="archive-yes">Arquivar</button><button type="button" class="btn ghost" data-act="archive-no">Cancelar</button></div>` : '') : ''}
+      <div class="d-foot">
+        ${w ? `<button type="button" class="btn ghost" data-act="archive" style="color:var(--late)">Arquivar</button>` : ''}
+        <span class="fine" style="margin-left:auto">Última atividade: ${t.lastAct ? esc(new Date(t.lastAct).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'})) : '—'}</span>
+      </div>
     </div>
   </aside>`;
-  const btn = root.querySelector('[data-close].btn'); if (btn) btn.focus();
+  const fit = () => { const ta = $('#dTitle'); if (ta){ ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; } };
+  fit(); requestAnimationFrame(fit);
+  const body = root.querySelector('.d-body'); if (body && keepTop) body.scrollTop = keepTop;
+  if (!prevBody){ const fine = window.matchMedia && matchMedia('(pointer: fine)').matches; const f = (fine && root.querySelector('#logTxt')) || root.querySelector('[data-close].btn'); if (f) f.focus(); }
+}
+
+function renderNewTask(){
+  const root = $('#drawerRoot');
+  const nt = ui.newTask;
+  root.innerHTML = `<div class="scrim" data-close></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="ntTitle">
+    <div class="d-head"><span class="bucket-name" id="ntTitle" style="font-size:14px;color:var(--fg)">Nova tarefa</span><span class="spacer"></span>
+      <button type="button" class="btn icon ghost" data-close aria-label="Fechar">${ICON.x}</button></div>
+    <div class="d-body">
+      <div class="fld"><span>Título <span class="req">*</span></span><input class="inp" id="ntName" maxlength="300" autocomplete="off" placeholder="Ex.: RTA - Settling - substituir filtro da PP02" value="${esc(nt.name || '')}"></div>
+      <div class="form-grid">
+        <div class="fld"><span>Etapa</span><select class="inp" id="ntList">${board.lists.map(x => `<option value="${esc(x.id)}" ${x.id === nt.listId ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
+        <div class="fld"><span>Lembrete</span><input class="inp" id="ntDue" type="date"></div>
+        <div class="fld"><span>Aguardando</span><input class="inp" id="ntWait" list="waitList2" autocomplete="off" placeholder="—"></div>
+        <div class="fld"><span>Prioridade</span><select class="inp" id="ntPrio">${PRIORIDADES.map(p => `<option ${p === 'Média' ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></div>
+      </div>
+      <datalist id="waitList2">${waitNames().map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <div><div class="sec-label">Plataforma <span class="fine">· marcada pelo título quando tiver P-58, P-57 ou MOP-1</span></div>
+        <div class="acts" style="margin-top:6px">${PLATS.map(p => `<button type="button" class="tg ${p.cls}" data-ntplat="${p.id}" aria-pressed="${(nt.plats || []).includes(p.id)}">${p.id}</button>`).join('')}</div></div>
+      <div class="fld"><span>Referências <span class="fine">· separe por " · " ou vírgula (ex.: Nota 17130615, RC 36742082)</span></span><input class="inp" id="ntRefs" autocomplete="off" placeholder="—"></div>
+      <div class="fld"><span>Primeiro registro do histórico</span><input class="inp" id="ntFirst" autocomplete="off" placeholder="Ex.: Solicitada cotação à Framo"></div>
+      <div class="row"><button type="button" class="btn primary" data-act="create">Criar tarefa</button><button type="button" class="btn ghost" data-close>Cancelar</button></div>
+    </div>
+  </aside>`;
+  const n = $('#ntName'); if (n) n.focus();
 }
 
 /* ---------- tela de conexão ---------- */
+function tokenUrl(k){ return `https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=${encodeURIComponent('Painel Carteira Hidráulica')}&key=${encodeURIComponent(k)}`; }
 function renderSetup(msg){
   const c = conn || {};
-  const keyVal = c.key || '';
-  const tokenUrl = k => `https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=${encodeURIComponent('Painel Carteira Hidráulica')}&key=${encodeURIComponent(k)}`;
   $('#main').innerHTML = `<div class="scroll"><div class="setup">
     <h2>Conectar ao Trello</h2>
-    <p>Este painel lê o quadro <b>Carteira Hidráulica</b> direto do Trello, aqui no seu navegador. A chave e o token ficam guardados só neste Chrome; a página não tem servidor e não grava os dados da carteira em lugar nenhum. O acesso é <b>somente leitura</b>.</p>
+    <p>O painel lê e grava o quadro <b>Carteira Hidráulica</b> direto no Trello, aqui no seu navegador. A chave e o token ficam guardados só neste Chrome; a página não tem servidor e não guarda os dados da carteira em lugar nenhum.</p>
     ${msg ? `<div class="msg ${msg.ok ? 'ok' : 'err'}">${esc(msg.text)}</div>` : ''}
     <div class="step"><h3><span class="col-step">1</span>Chave de API do Trello</h3>
       <ol>
-        <li>Abra <a href="https://trello.com/power-ups/admin" target="_blank" rel="noopener noreferrer">trello.com/power-ups/admin</a> e clique em <b>Novo</b>.</li>
-        <li>Nome: <i>Painel Carteira</i>; área de trabalho: a sua; e-mail e autor: os seus. Clique em <b>Criar</b>.</li>
-        <li>Na aba <b>Chave de API</b>, clique em <b>Gerar uma nova chave de API</b> e copie a chave.</li>
+        <li>Abra <a href="https://trello.com/power-ups/admin" target="_blank" rel="noopener noreferrer">trello.com/power-ups/admin</a>, clique em <b>Novo</b> e crie o app <i>Painel Carteira</i> (URL do iframe em branco).</li>
+        <li>No menu do app, abra <b>Autenticação do Trello</b>, gere a <b>Chave de API</b> e copie.</li>
       </ol>
       <label for="inKey">Chave de API</label>
-      <input id="inKey" value="${esc(keyVal)}" placeholder="32 caracteres" autocomplete="off" spellcheck="false">
+      <input id="inKey" value="${esc(c.key || '')}" placeholder="32 caracteres" autocomplete="off" spellcheck="false">
     </div>
-    <div class="step"><h3><span class="col-step">2</span>Token de leitura</h3>
+    <div class="step"><h3><span class="col-step">2</span>Token (leitura e escrita)</h3>
       <ol>
         <li>Com a chave colada acima, clique em <b>Gerar token</b>. Abre uma página do Trello.</li>
-        <li>Clique em <b>Permitir</b> e copie o token que aparece.</li>
+        <li>Clique em <b>Permitir</b>, copie o token que aparece e cole abaixo.</li>
       </ol>
-      <div class="row"><button type="button" class="btn" id="btnToken">${ICON.ext}Gerar token</button><span class="fine">Permissão pedida: só leitura, sem expirar (revogável em Configurações → Aplicativos do Trello).</span></div>
+      <div class="row"><button type="button" class="btn" id="btnToken">${ICON.ext}Gerar token</button><span class="fine">Pede leitura e escrita, sem expirar. Dá para revogar no Trello em Configurações → Aplicativos.</span></div>
       <label for="inToken">Token</label>
-      <input id="inToken" value="${esc(c.token || '')}" placeholder="ATTA…" autocomplete="off" spellcheck="false" type="password">
+      <input id="inToken" value="" placeholder="${c.token ? 'Token atual guardado — cole um novo para trocar' : 'ATTA…'}" autocomplete="off" spellcheck="false" type="password">
       <details class="adv"><summary>Avançado</summary>
         <div style="margin-top:8px"><label for="inBoard">Quadro (código do link trello.com/b/<b>código</b>/…)</label>
         <input id="inBoard" value="${esc(c.board || DEFAULT_BOARD)}" autocomplete="off" spellcheck="false"></div>
@@ -811,7 +969,7 @@ function renderSetup(msg){
       ${board ? '<button type="button" class="btn" id="btnBack">Voltar ao painel</button>' : ''}
       ${conn ? '<button type="button" class="btn ghost" id="btnForget" style="color:var(--late)">Desconectar este navegador</button>' : ''}
     </div>
-    <p class="fine">Abra este mesmo link no celular ou em outro computador e repita os passos 1 e 2 (a chave pode ser a mesma).</p>
+    <p class="fine">Em outro computador ou no celular, abra este mesmo link e repita o passo 2 (a chave pode ser a mesma).</p>
   </div></div>`;
   $('#btnToken').addEventListener('click', () => {
     const k = $('#inKey').value.trim();
@@ -820,84 +978,279 @@ function renderSetup(msg){
     window.open(tokenUrl(k), '_blank', 'noopener');
   });
   $('#btnConnect').addEventListener('click', async () => {
-    const key = $('#inKey').value.trim(), token = $('#inToken').value.trim(), brd = ($('#inBoard').value.trim() || DEFAULT_BOARD).replace(/^.*\/b\//, '').split('/')[0];
+    const key = $('#inKey').value.trim(), typed = $('#inToken').value.trim(), brd = ($('#inBoard').value.trim() || DEFAULT_BOARD).replace(/^.*\/b\//, '').split('/')[0];
+    const token = typed || (conn && conn.key === key ? conn.token : '');
     if (!/^[a-f0-9]{32}$/i.test(key)){ renderSetup({text: 'A chave de API deve ter 32 caracteres (letras a–f e números).'}); return; }
-    if (token.length < 32){ renderSetup({text: 'Cole o token gerado no passo 2.'}); return; }
+    if (!token || token.length < 32){ renderSetup({text: 'Cole o token gerado no passo 2.'}); return; }
     conn = {key, token, board: brd}; save(STORE, conn);
+    perm = {checked: false, write: false};
     ui.setup = false; board = null; await refresh(true);
   });
   const back = $('#btnBack'); if (back) back.addEventListener('click', () => { ui.setup = false; render(); });
   const fg = $('#btnForget'); if (fg) fg.addEventListener('click', () => {
     try { localStorage.removeItem(STORE); } catch(e){}
-    conn = null; board = null; lastOk = null; renderSetup({ok: true, text: 'Chave e token apagados deste navegador.'}); setSync();
+    conn = null; board = null; lastOk = null; perm = {checked: false, write: false};
+    renderSetup({ok: true, text: 'Chave e token apagados deste navegador.'}); setSync();
   });
 }
 
 /* ---------- render geral ---------- */
 function setSync(){
   const el = $('#sync'), tx = $('#syncTxt');
-  el.className = 'sync' + (loading ? ' busy' : lastErr ? ' err' : !lastOk ? ' off' : '');
-  if (loading) tx.textContent = 'Atualizando do Trello…';
+  el.className = 'sync' + (saving || loading ? ' busy' : lastErr ? ' err' : !lastOk ? ' off' : '');
+  if (saving) tx.textContent = 'Salvando no Trello…';
+  else if (loading && !board) tx.textContent = 'Lendo o Trello…';
+  else if (loading) tx.textContent = 'Atualizando…';
   else if (lastErr && !lastOk) tx.textContent = lastErr;
-  else if (lastOk) tx.textContent = `Espelho do Trello · atualizado às ${lastOk.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}${lastErr ? ' · falha na última tentativa' : ''}`;
+  else if (lastOk) tx.textContent = `Sincronizado com o Trello às ${lastOk.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}${lastErr ? ' · falha na última tentativa' : ''}`;
   else tx.textContent = conn ? 'Conectando…' : 'Não conectado';
   $('#btnRefresh').disabled = loading || !conn;
+  $('#btnNew').hidden = !(board && canWrite() && !ui.setup);
+  $('#modeTag').innerHTML = !board || ui.setup ? '' : canWrite()
+    ? '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 11.5V13h1.5l7-7L10 4.5l-7 7zM11 3.5l1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Edição ativa · grava direto no Trello'
+    : '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Somente leitura';
   if (conn && conn.board) $('#btnTrello').href = `https://trello.com/b/${encodeURIComponent(conn.board)}`;
 }
-function render(){
+function captureScroll(){
+  const k = {cols: {}};
+  const b = $('.board'); if (b) k.bl = b.scrollLeft;
+  const s = $('.scroll'); if (s) k.st = s.scrollTop;
+  document.querySelectorAll('.col[data-list]').forEach(c => { k.cols[c.dataset.list] = c.querySelector('.cards').scrollTop; });
+  return k;
+}
+function restoreScroll(k){
+  const b = $('.board'); if (b && k.bl != null) b.scrollLeft = k.bl;
+  const s = $('.scroll'); if (s && k.st != null) s.scrollTop = k.st;
+  document.querySelectorAll('.col[data-list]').forEach(c => { const v = k.cols[c.dataset.list]; if (v != null) c.querySelector('.cards').scrollTop = v; });
+}
+function render(opts = {}){
   TODAY = isoLocal(new Date());
   setSync();
   document.querySelectorAll('#tabs .tab').forEach(b => { b.setAttribute('aria-selected', String(b.dataset.view === ui.view)); b.disabled = !board || ui.setup; });
-  $('#banner').innerHTML = lastErr && board && !ui.setup ? `<div class="banner">Não consegui atualizar agora (${esc(lastErr)}). Mostrando a última leitura. <button type="button" class="btn" data-retry>Tentar de novo</button></div>` : '';
+  let ban = '';
+  if (lastErr && board && !ui.setup) ban = `<div class="banner">Não consegui atualizar agora (${esc(lastErr)}). Mostrando a última leitura. <button type="button" class="btn" data-retry>Tentar de novo</button></div>`;
+  else if (board && !ui.setup && perm.checked && !perm.write) ban = `<div class="ro-banner">Seu token atual é só de leitura. Para editar pelo painel, gere um token novo com escrita (leva 1 minuto). <button type="button" class="btn" data-reauth>Gerar token com escrita</button></div>`;
+  $('#banner').innerHTML = ban;
   if (ui.setup || !conn){ renderStrip(); renderSetup(ui.setupMsg); ui.setupMsg = null; renderDrawer(); return; }
   if (!board){ $('#strip').innerHTML = ''; $('#main').innerHTML = `<div class="loading" aria-label="Carregando">${'<div class="skel"></div>'.repeat(4)}</div>`; return; }
+  const keep = captureScroll();
   renderStrip();
   const v = ui.view;
   $('#main').innerHTML = v === 'resumo' ? renderResumo() : v === 'grade' ? renderGrade() : v === 'lembretes' ? renderLembretes() : renderBoard();
-  renderDrawer();
+  restoreScroll(keep);
+  if (!(opts.keepDrawer && ui.dirty)) renderDrawer();
 }
 
-/* ---------- leitura da API ---------- */
+/* ---------- API do Trello ---------- */
+function errText(status, tx){
+  if (status === 401) return /permission|scope|write/i.test(tx) ? 'o token não tem permissão de escrita' : 'token inválido ou revogado';
+  if (status === 404) return 'não encontrado (o cartão pode ter sido arquivado)';
+  if (status === 429) return 'muitas operações seguidas; tente em alguns segundos';
+  if (status === 400) return (tx || 'requisição inválida').slice(0, 120);
+  return `Trello respondeu ${status}`;
+}
+async function api(method, path, params = {}){
+  const qs = new URLSearchParams({key: conn.key, token: conn.token});
+  const opts = {method, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer'};
+  if (method === 'GET' || method === 'DELETE') Object.entries(params).forEach(([k, v]) => qs.set(k, v));
+  else opts.body = new URLSearchParams(params);
+  let r;
+  try { r = await fetch(`${API}${path}?${qs}`, opts); }
+  catch(e){ throw new Error('sem conexão com api.trello.com'); }
+  if (!r.ok){ const tx = await r.text().catch(() => ''); const e = new Error(errText(r.status, tx)); e.status = r.status; throw e; }
+  const ct = r.headers.get('content-type') || '';
+  return ct.includes('json') ? r.json() : r.text();
+}
+/* relê a descrição atual antes de gravar, para não apagar mudanças feitas em outro lugar */
+async function mutateDesc(id, fn, extra = {}){
+  const fresh = await api('GET', `/cards/${id}`, {fields: 'desc'});
+  return api('PUT', `/cards/${id}`, Object.assign({desc: fn(fresh.desc || '')}, extra));
+}
+async function write(okMsg, fn, opts = {}){
+  if (!canWrite()){ toast('Token só de leitura: gere um token com escrita na conexão.', {err: true}); return false; }
+  saving++; setSync();
+  try {
+    const res = await fn();
+    ui.dirty = false;
+    saving--; setSync();
+    await refresh(false);
+    if (okMsg) toast(okMsg, opts.undo ? {action: {label: 'Desfazer', fn: opts.undo}} : {});
+    return res || true;
+  } catch(e){
+    saving--; setSync(); ui.dirty = false;
+    toast(`Não salvou: ${e.message}`, {err: true});
+    await refresh(false);
+    return false;
+  }
+}
+async function checkPerm(){
+  try {
+    const tk = await api('GET', `/tokens/${encodeURIComponent(conn.token)}`, {fields: 'permissions'});
+    const ps = Array.isArray(tk.permissions) ? tk.permissions : [];
+    perm = {checked: true, write: ps.some(p => p.modelType === 'Board' && p.write)};
+  } catch(e){
+    perm = {checked: true, write: e.status !== 401};   // na dúvida, deixa editar: se não puder, o Trello recusa e o painel avisa
+  }
+}
 async function refresh(manual){
-  if (!conn || loading) return;
+  if (!conn) return;
+  if (loading){ again = true; return; }
   loading = true; setSync();
-  const params = new URLSearchParams({
-    key: conn.key, token: conn.token,
+  const params = {
     fields: 'name,url,shortUrl',
     lists: 'open', list_fields: 'name,pos',
-    cards: 'open', card_fields: 'name,desc,due,dueComplete,idList,idLabels,shortUrl,url,pos,dateLastActivity',
+    cards: 'open', card_fields: 'name,desc,due,dueComplete,idList,idLabels,shortUrl,url,pos,dateLastActivity,closed',
     labels: 'all', label_fields: 'name,color', labels_limit: '100',
     checklists: 'all'
-  });
+  };
   try {
-    const r = await fetch(`${API}/boards/${encodeURIComponent(conn.board || DEFAULT_BOARD)}?${params}`, {cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer'});
-    if (r.status === 401){ const tx = await r.text(); throw Object.assign(new Error(/key/i.test(tx) && !/token/i.test(tx) ? 'chave de API inválida' : 'token inválido ou revogado'), {auth: true}); }
-    if (r.status === 404 || r.status === 400) throw Object.assign(new Error('quadro não encontrado ou sem acesso'), {auth: true});
-    if (r.status === 429) throw new Error('limite de leituras do Trello, tente em alguns segundos');
-    if (!r.ok) throw new Error(`Trello respondeu ${r.status}`);
-    const data = await r.json();
+    const data = await api('GET', `/boards/${encodeURIComponent(conn.board || DEFAULT_BOARD)}`, params);
     board = build(data);
+    if (!perm.checked) await checkPerm();
     if (ui.open && !board.tasks.some(t => t.id === ui.open)) ui.open = null;
     lastOk = new Date(); lastErr = null;
     if (manual) toast(`Atualizado: ${plural(board.tasks.filter(t => !t.done).length, 'tarefa aberta', 'tarefas abertas')}`);
   } catch (e){
-    lastErr = e && e.message && !(e instanceof TypeError) ? e.message : 'sem conexão com api.trello.com';
-    if (e && e.auth){ ui.setup = true; ui.setupMsg = {text: `Não consegui ler o quadro: ${lastErr}. Confira a chave e o token.`}; board = null; }
+    lastErr = e.message || 'falha ao ler o Trello';
+    if (e.status === 401 || e.status === 404 || e.status === 400){
+      ui.setup = true; board = null;
+      ui.setupMsg = {text: `Não consegui ler o quadro: ${lastErr}. Confira a chave, o token e o código do quadro.`};
+    }
   } finally {
-    loading = false; render();
+    loading = false; render({keepDrawer: !manual});
+    if (again){ again = false; refresh(false); }
   }
 }
 function schedule(){
   clearInterval(timer);
-  timer = setInterval(() => { if (document.visibilityState === 'visible') refresh(false); }, REFRESH_MS);
+  timer = setInterval(() => { if (document.visibilityState === 'visible' && !saving) refresh(false); }, REFRESH_MS);
+}
+
+/* ---------- ações de edição ---------- */
+async function moveCard(t, toId){
+  const from = listOf(t).name, to = board.lists.find(l => l.id === toId);
+  if (!to || toId === t.listId) return;
+  const prev = t.listId;
+  t.listId = toId; render();                       // mostra já na nova coluna
+  await write(`Movida para ${to.name}`, () => mutateDesc(t.id, d => editDesc(d, s => { s.hist.unshift(histLine(`Movida: ${from} → ${to.name}`)); }), {idList: toId, pos: 'top'}),
+    {undo: () => { const tt = T(t.id); if (tt) moveCard(tt, prev); }});
+}
+async function setDone(t, on){
+  t.done = on; render();
+  await write(on ? 'Tarefa concluída' : 'Tarefa reaberta', () => api('PUT', `/cards/${t.id}`, {dueComplete: String(on)}),
+    {undo: () => { const tt = T(t.id); if (tt) setDone(tt, !on); }});
+}
+async function toggleLabel(t, role, on){
+  const lid = board.labelByRole[role];
+  if (!lid){ toast('Etiqueta não encontrada no quadro.', {err: true}); return false; }
+  const has = t.labelIds.includes(lid);
+  if (on === has) return true;
+  return on ? api('POST', `/cards/${t.id}/idLabels`, {value: lid}) : api('DELETE', `/cards/${t.id}/idLabels/${lid}`);
+}
+async function act(name, el){
+  if (name === 'new'){ ui.newTask = {listId: (el && el.dataset.list) || (board.lists[0] && board.lists[0].id), plats: []}; ui.open = null; renderDrawer(); return; }
+  if (name === 'create') return createTask();
+  const t = ui.open ? T(ui.open) : null; if (!t) return;
+  switch (name){
+    case 'title': { const v = el.value.replace(/\s+/g, ' ').trim(); if (!v || v === t.title){ el.value = t.title; return; } await write('Título salvo', () => api('PUT', `/cards/${t.id}`, {name: v})); break; }
+    case 'move': await moveCard(t, el.value); break;
+    case 'due': { const v = el.value; if ((v || null) === t.due) return; await write(v ? `Lembrete: ${fmtLong(v)}` : 'Lembrete removido', () => api('PUT', `/cards/${t.id}`, {due: v ? `${v}T12:00:00.000Z` : 'null'})); break; }
+    case 'due-clear': await write('Lembrete removido', () => api('PUT', `/cards/${t.id}`, {due: 'null'})); break;
+    case 'waiting': { const v = el.value.trim(); if (v === t.waiting) return; await write(v ? `Aguardando: ${v}` : 'Aguardando removido', () => mutateDesc(t.id, d => editDesc(d, s => { s.f.waiting = v; }))); break; }
+    case 'prio': {
+      const v = el.value;
+      await write(`Prioridade: ${v}`, async () => {
+        await mutateDesc(t.id, d => editDesc(d, s => { s.f.priority = v === 'Média' ? '' : v; }));
+        if (board.labelByRole.urg) await toggleLabel(t, 'urg', v === URG || v === 'Urgente');
+      });
+      break;
+    }
+    case 'plat': { const role = el.dataset.role, on = !t.plats.includes(role); await write(`${role} ${on ? 'marcada' : 'desmarcada'}`, () => toggleLabel(t, role, on)); break; }
+    case 'and': { const on = !t.and; await write(on ? 'Em andamento' : 'Tirado de em andamento', () => toggleLabel(t, 'and', on)); break; }
+    case 'done': await setDone(t, !t.done); break;
+    case 'log': {
+      const inp = $('#logTxt'), txt = inp.value.replace(/\s+/g, ' ').trim(), date = $('#logDate').value || TODAY;
+      if (!txt){ inp.focus(); return; }
+      inp.disabled = true;
+      const ok = await write('Andamento registrado', () => mutateDesc(t.id, d => editDesc(d, s => { s.hist.unshift(histLine(txt, date)); })));
+      if (!ok){ const i2 = $('#logTxt'); if (i2){ i2.value = txt; i2.disabled = false; } }
+      break;
+    }
+    case 'ref-add': {
+      const tipo = $('#refTipo').value, num = $('#refNum').value.trim();
+      if (!num){ $('#refNum').focus(); return; }
+      await write(`${tipo} ${num} adicionada`, () => mutateDesc(t.id, d => editDesc(d, s => {
+        const refs = parseRefs(s.f.refs);
+        if (!refs.some(r => normRef(r.num) === normRef(num))) refs.push({tipo, num});
+        s.f.refs = refs.map(refStr).join(' · ');
+      })));
+      break;
+    }
+    case 'ref-rm': { const key = normRef(el.dataset.ref); await write('Referência removida', () => mutateDesc(t.id, d => editDesc(d, s => { s.f.refs = parseRefs(s.f.refs).filter(r => normRef(refStr(r)) !== key).map(refStr).join(' · '); }))); break; }
+    case 'ck': { const on = el.dataset.on !== 'true'; await write(on ? 'Item marcado' : 'Item desmarcado', () => api('PUT', `/cards/${t.id}/checkItem/${el.dataset.item}`, {state: on ? 'complete' : 'incomplete'})); break; }
+    case 'ck-add': {
+      const inp = $('#ckNew'), txt = inp.value.trim(); if (!txt){ inp.focus(); return; }
+      await write('Item adicionado', async () => {
+        let cl = t.checklists[0] && t.checklists[0].id;
+        if (!cl){ const c = await api('POST', `/cards/${t.id}/checklists`, {name: 'Checklist'}); cl = c.id; }
+        await api('POST', `/checklists/${cl}/checkItems`, {name: txt, pos: 'bottom'});
+      });
+      break;
+    }
+    case 'ck-rm': await write('Item removido', () => api('DELETE', `/checklists/${el.dataset.cl}/checkItems/${el.dataset.item}`)); break;
+    case 'raw': ui.raw = !ui.raw; renderDrawer(); { const r = $('#rawTxt'); if (r) r.focus(); } break;
+    case 'raw-save': {
+      const v = $('#rawTxt').value;
+      const ok = await write('Texto salvo', async () => {
+        const fresh = await api('GET', `/cards/${t.id}`, {fields: 'desc'});
+        if ((fresh.desc || '') !== t.rawDesc) throw new Error('o cartão mudou enquanto você editava; atualizei, confira e salve de novo');
+        await api('PUT', `/cards/${t.id}`, {desc: v.trim()});
+      });
+      if (ok) ui.raw = false;
+      renderDrawer();
+      break;
+    }
+    case 'archive': ui.confirmArchive = true; renderDrawer(); break;
+    case 'archive-no': ui.confirmArchive = false; renderDrawer(); break;
+    case 'archive-yes': {
+      const id = t.id; ui.confirmArchive = false; ui.open = null;
+      await write('Tarefa arquivada', () => api('PUT', `/cards/${id}`, {closed: 'true'}), {undo: () => write('Tarefa restaurada', () => api('PUT', `/cards/${id}`, {closed: 'false'}))});
+      break;
+    }
+  }
+}
+async function createTask(){
+  const name = $('#ntName').value.replace(/\s+/g, ' ').trim();
+  if (!name){ $('#ntName').focus(); toast('Dê um título para a tarefa.', {err: true}); return; }
+  const listId = $('#ntList').value, due = $('#ntDue').value, waiting = $('#ntWait').value.trim(), prio = $('#ntPrio').value;
+  const refs = parseRefs($('#ntRefs').value.split(/\s*[,;·]\s*/).filter(Boolean).join(' · '));
+  const first = $('#ntFirst').value.replace(/\s+/g, ' ').trim();
+  const plats = [...new Set([...document.querySelectorAll('[data-ntplat][aria-pressed="true"]')].map(b => b.dataset.ntplat).concat(autoPlats(name)))];
+  const desc = joinDesc({f: {waiting, refs: refs.map(refStr).join(' · '), priority: prio === 'Média' ? '' : prio, created: fmtLong(TODAY)}, extra: [], hist: first ? [histLine(first)] : []});
+  const labels = plats.map(p => board.labelByRole[p]).filter(Boolean);
+  if ((prio === URG || prio === 'Urgente') && board.labelByRole.urg) labels.push(board.labelByRole.urg);
+  const params = {idList: listId, name, desc, pos: 'top'};
+  if (due) params.due = `${due}T12:00:00.000Z`;
+  if (labels.length) params.idLabels = labels.join(',');
+  ui.newTask = null; renderDrawer();
+  const card = await write('Tarefa criada', () => api('POST', '/cards', params));
+  if (card && card.id){ ui.open = card.id; renderDrawer(); }
 }
 
 /* ---------- eventos ---------- */
 document.addEventListener('click', e => {
-  const t = e.target.closest('button, a, tr[data-open]'); if (!t) return;
+  const t = e.target.closest('[data-ring], [data-act], [data-ntplat], button, a, [data-open]'); if (!t) return;
   const ds = t.dataset;
-  if (ds.open){ ui.open = ds.open; renderDrawer(); return; }
-  if ('close' in ds){ ui.open = null; renderDrawer(); return; }
+  if (ds.ring){ e.stopPropagation(); const tk = T(ds.ring); if (tk && canWrite()) setDone(tk, !tk.done); return; }
+  if (ds.ntplat){ t.setAttribute('aria-pressed', String(t.getAttribute('aria-pressed') !== 'true')); return; }
+  if (ds.act && t.tagName === 'BUTTON'){ act(ds.act, t); return; }
+  if (ds.copy){
+    const v = ds.copy;
+    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast(`Copiado: ${v}`), () => toast('Não deu para copiar neste navegador', {err: true}));
+    return;
+  }
+  if (ds.open && t.tagName !== 'A'){ ui.open = ds.open; ui.newTask = null; ui.raw = false; ui.confirmArchive = false; ui.dirty = false; renderDrawer(); return; }
+  if ('close' in ds){ ui.open = null; ui.newTask = null; ui.raw = false; ui.confirmArchive = false; ui.dirty = false; renderDrawer(); return; }
   if (ds.view && !t.disabled){ ui.view = ds.view; persistUi(); render(); return; }
   if (ds.quick){ ui.quick = ui.quick === ds.quick ? null : ds.quick; render(); return; }
   if (ds.plat){
@@ -914,24 +1267,61 @@ document.addEventListener('click', e => {
   }
   if (ds.wait !== undefined && t.classList.contains('brow')){ ui.waiting = ds.wait; ui.view = 'quadro'; persistUi(); render(); return; }
   if (ds.sort){ ui.sort = ui.sort.key === ds.sort ? {key: ds.sort, dir: -ui.sort.dir} : {key: ds.sort, dir: 1}; render(); return; }
-  if (ds.copy){
-    const v = ds.copy;
-    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast(`Copiado: ${v}`), () => toast('Não deu para copiar neste navegador'));
-    return;
-  }
   if ('retry' in ds){ refresh(true); return; }
+  if ('reauth' in ds){ ui.setup = true; ui.setupMsg = {text: 'Clique em Gerar token, permita o acesso e cole o token novo. A chave continua a mesma.'}; render(); return; }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'waitSel'){ ui.waiting = el.value; render(); return; }
+  if (el.dataset && el.dataset.act && el.tagName !== 'BUTTON') act(el.dataset.act, el);
+});
+document.addEventListener('input', e => {
+  if (e.target.closest && e.target.closest('.drawer')) ui.dirty = true;
+  if (e.target.id === 'dTitle'){ e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight + 2) + 'px'; }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && ui.open){ ui.open = null; renderDrawer(); return; }
-  if (e.key === 'Enter' && e.target.matches('tr[data-open]')){ ui.open = e.target.dataset.open; renderDrawer(); return; }
-  if (e.target.matches('input, select, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
+  const el = e.target;
+  if (e.key === 'Escape'){ if (ui.open || ui.newTask){ ui.open = null; ui.newTask = null; ui.raw = false; ui.dirty = false; renderDrawer(); } return; }
+  if (e.key === 'Enter' && !e.shiftKey){
+    if (el.id === 'dTitle' || el.dataset.act === 'waiting'){ e.preventDefault(); el.blur(); return; }
+    if (el.id === 'logTxt'){ e.preventDefault(); act('log', el); return; }
+    if (el.id === 'refNum'){ e.preventDefault(); act('ref-add', el); return; }
+    if (el.id === 'ckNew'){ e.preventDefault(); act('ck-add', el); return; }
+    if (el.closest && el.closest('.drawer') && el.id && el.id.startsWith('nt') && el.tagName === 'INPUT'){ e.preventDefault(); createTask(); return; }
+    if (el.matches('[data-open]') && el.tagName !== 'BUTTON'){ e.preventDefault(); ui.open = el.dataset.open; renderDrawer(); return; }
+  }
+  if (el.matches('input, select, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === '/'){ e.preventDefault(); $('#q').focus(); }
   else if ((e.key === 'r' || e.key === 'R') && conn){ refresh(true); }
+  else if ((e.key === 'n' || e.key === 'N') && board && canWrite() && !ui.open && !ui.newTask){ e.preventDefault(); act('new'); }
 });
-document.addEventListener('change', e => { if (e.target.id === 'waitSel'){ ui.waiting = e.target.value; render(); } });
+
+/* arrastar e soltar entre etapas */
+let dragId = null;
+document.addEventListener('dragstart', e => {
+  const c = e.target.closest && e.target.closest('.card[data-open]');
+  if (!c || !canWrite()) return;
+  dragId = c.dataset.open; e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', dragId); } catch(err){}
+  c.classList.add('dragging');
+});
+document.addEventListener('dragend', () => { dragId = null; document.querySelectorAll('.dragging, .col.drop').forEach(x => x.classList.remove('dragging', 'drop')); });
+document.addEventListener('dragover', e => {
+  if (!dragId) return; const col = e.target.closest && e.target.closest('.col[data-list]'); if (!col) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.col.drop').forEach(x => { if (x !== col) x.classList.remove('drop'); });
+  col.classList.add('drop');
+});
+document.addEventListener('drop', e => {
+  if (!dragId) return; const col = e.target.closest && e.target.closest('.col[data-list]'); if (!col) return;
+  e.preventDefault(); const tk = T(dragId); const to = col.dataset.list; dragId = null;
+  document.querySelectorAll('.col.drop, .dragging').forEach(x => x.classList.remove('drop', 'dragging'));
+  if (tk && tk.listId !== to) moveCard(tk, to);
+});
+
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { ui.q = e.target.value.trim(); if (board && !ui.setup) render(); }, 120); });
 $('#btnRefresh').addEventListener('click', () => refresh(true));
-$('#btnSettings').addEventListener('click', () => { ui.setup = board ? !ui.setup : true; render(); });
+$('#btnSettings').addEventListener('click', () => { ui.setup = board ? !ui.setup : true; ui.open = null; ui.newTask = null; render(); });
 $('#btnTheme').addEventListener('click', () => {
   const root = document.documentElement;
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
@@ -939,7 +1329,7 @@ $('#btnTheme').addEventListener('click', () => {
   try { localStorage.setItem('ch.dash.theme', root.dataset.theme); } catch(e){}
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && conn && (!lastOk || Date.now() - lastOk.getTime() > 60000)) refresh(false);
+  if (document.visibilityState === 'visible' && conn && !saving && (!lastOk || Date.now() - lastOk.getTime() > 60000)) refresh(false);
 });
 
 /* ---------- início ---------- */
