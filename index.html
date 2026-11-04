@@ -101,6 +101,7 @@ a{color:inherit}
 .tabs-row{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
 .tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
 .tab{border:0;background:transparent;padding:7.5px 10px 8.5px;font-weight:600;color:var(--fg-2);border-bottom:3px solid transparent;white-space:nowrap}
+a.tab{text-decoration:none;display:inline-block}
 .tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .tab:hover{color:var(--fg)}
 .ro-tag{margin-left:auto;align-self:center;font-size:11px;font-weight:600;color:var(--fg-3);padding-bottom:6px;display:inline-flex;gap:5px;align-items:center}
@@ -395,6 +396,7 @@ button.ring.ok:hover{background:var(--accent)}
         <button class="tab" role="tab" data-view="resumo">Resumo</button>
         <button class="tab" role="tab" data-view="grade">Grade</button>
         <button class="tab" role="tab" data-view="lembretes">Lembretes</button>
+        <a class="tab" href="prompts/">Prompts</a>
       </nav>
       <span class="ro-tag" id="modeTag"></span>
     </div>
