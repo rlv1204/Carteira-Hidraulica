@@ -17,6 +17,8 @@ A pasta `prompts/` é a página de prompts, aberta pela aba **Prompts** da Carte
 - O resultado fica nos comentários. Resultado longo vai em partes, com `[parte 1/3]` na primeira linha, e a página junta tudo.
 - Para rodar, use o ícone **Rodar prompt** no iPhone, que abre um chat novo com `roda`. Esse comando pega o primeiro cartão de **A rodar**. Para escolher outro, mande `roda o P012`. `roda tudo` roda a fila inteira.
 - Pergunta sobre um resultado fica em comentário com `[pergunta]` na primeira linha. O cartão volta para o topo de **A rodar**, e o comando é o mesmo.
+- **Registrar na carteira**, no resultado, grava uma linha `dd/mm - texto` no histórico da tarefa escolhida, sem usar o Claude e sem mexer em etapa, lembrete ou prioridade. A página relê a tarefa antes de gravar.
+- **Modelo**, em Novo prompt, coloca no texto os campos para preencher de GM, PQS, nota SAP, PATEC ou pesquisa de componente. O texto já escrito é mantido.
 - **Cancelar** apaga a pergunta pendente ou desfaz **Rodar de novo**, e o cartão volta para **Pronto** sem perder os resultados.
 - Resultado incompleto fica com os botões de copiar desligados. Se nada novo chegar em 10 minutos, a página avisa que a sessão pode ter parado.
 - Atualiza a cada 30 segundos com a aba visível e a cada 2 minutos com a aba escondida. A quantidade de resultados novos aparece no título da aba. Atalhos: `N` novo prompt, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
