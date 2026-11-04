@@ -13,10 +13,13 @@ const SEEN_KEY = 'ch.prompts.seen';
 const DRAFT_KEY = 'ch.prompts.draft';
 const LIST_NAMES = {todo: 'A rodar', done: 'Pronto', arch: 'Arquivo'};
 const POLL_MS = 30000;
+const POLL_HIDDEN_MS = 120000;
+const STALL_MS = 10 * 60000;
 const LIMIT = 16384;
-const CARD_FIELDS = 'name,idList,closed,dateLastActivity,badges';
+const CARD_FIELDS = 'name,idList,closed,dateLastActivity,badges,pos';
 
 const $ = (s, r = document) => r.querySelector(s);
+const BASE_TITLE = document.title;
 
 function load(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
 function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
@@ -29,19 +32,41 @@ const st = {
   conn: load(CONN_KEY, null),
   lists: {}, cards: [], det: {},
   sel: null, mode: 'view', notice: null,
-  q: '', showArch: false, lastOk: 0, loading: false, saving: false, failed: null, askDraft: {},
+  q: '', showArch: false, lastOk: 0, saving: false, failed: null, askDraft: {}, stall: '',
   seen: load(SEEN_KEY, {})
 };
 
 /* ---------- Trello ---------- */
-async function api(method, path, params = {}){
-  const qs = new URLSearchParams({key: st.conn.key, token: st.conn.token});
+/* Chave e token vão no cabeçalho Authorization, fora do endereço.
+   Se o navegador ou o Trello recusarem o cabeçalho, a página volta a usar o endereço. */
+let auth = 'test';   // test: sem resposta ainda; header: funcionou; url: cabeçalho recusado
+const AUTH_NOTE = {header: 'Conexão: token protegido no cabeçalho', url: 'Conexão: token no endereço, o Trello não aceitou o cabeçalho'};
+function send(method, path, params, header){
+  const qs = new URLSearchParams(header ? {} : {key: st.conn.key, token: st.conn.token});
   const opts = {method, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer'};
+  if (header) opts.headers = {Authorization: `OAuth oauth_consumer_key="${st.conn.key}", oauth_token="${st.conn.token}"`};
   if (method === 'GET') Object.entries(params).forEach(([k, v]) => qs.set(k, v));
   else opts.body = new URLSearchParams(params);
-  let r;
-  try { r = await fetch(`${API}${path}?${qs}`, opts); }
-  catch(e){ throw new Error('sem conexão com api.trello.com'); }
+  const q = qs.toString();
+  return fetch(`${API}${path}${q ? `?${q}` : ''}`, opts);
+}
+async function request(method, path, params){
+  let r = null;
+  if (auth !== 'url'){
+    try { r = await send(method, path, params, true); }
+    catch(e){ if (auth === 'header') throw new Error('sem conexão com api.trello.com'); }
+    if (r && r.ok) auth = 'header';
+    else if (r && r.status === 401 && auth === 'test') r = null;
+  }
+  if (!r){
+    try { r = await send(method, path, params, false); }
+    catch(e){ throw new Error('sem conexão com api.trello.com'); }
+    if (r.ok) auth = 'url';
+  }
+  return r;
+}
+async function api(method, path, params = {}){
+  const r = await request(method, path, params);
   if (!r.ok){
     const e = new Error(r.status === 401 ? 'token recusado pelo Trello' : r.status === 429 ? 'limite de requisições do Trello' : `erro ${r.status} do Trello`);
     e.status = r.status;
@@ -60,8 +85,18 @@ function nextCode(cards){
   return 'P' + String(max + 1).padStart(3, '0');
 }
 function command(card){ const c = parseName(card.name).code; return c ? `roda o ${c}` : `roda o cartão "${card.name}"`; }
+/* O comando "roda" pega o primeiro cartão de A rodar, na ordem do Trello. */
+function nextInQueue(){ return st.cards.filter(c => !c.closed && listKey(c) === 'todo').sort((a, b) => a.pos - b.pos)[0] || null; }
+function runHint(card){
+  const next = nextInQueue(), cmd = esc(command(card));
+  return next && next.id !== card.id
+    ? `Este prompt não é o próximo da fila. No celular, mande: <code>${cmd}</code>`
+    : `No iPhone, toque em <b>Rodar prompt</b> e envie. Ou mande: <code>${cmd}</code>`;
+}
 function listKey(card){ return Object.keys(st.lists).find(k => st.lists[k].id === card.idList) || 'todo'; }
 function comments(card){ return (card.badges && card.badges.comments) || 0; }
+function isUnread(card){ return comments(card) > (st.seen[card.id] || 0); }
+function stalled(r){ return r.got < r.total && Date.now() - new Date(r.date).getTime() > STALL_MS; }
 function stamp(card){ return `${card.dateLastActivity}|${comments(card)}|${card.idList}`; }
 function findCard(id){ return st.cards.find(c => c.id === id && !c.closed) || null; }
 function fmtWhen(iso){
@@ -194,8 +229,10 @@ function renderMd(md){
       i += 2;
       const rows = [];
       while (i < lines.length && lines[i].trim() !== '' && lines[i].includes('|')) rows.push(splitRow(lines[i++]));
-      const body = rows.map(r => `<tr>${head.map((_, k) => `<td${cls(k)}>${inline(r[k] || '')}</td>`).join('')}</tr>`).join('');
-      out.push(`<div class="tbl"><table><thead><tr>${head.map((c, k) => `<th${cls(k)}>${inline(c)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`);
+      /* A tabela usa o maior número de colunas entre as linhas, para nenhuma célula sumir. */
+      const cols = Array.from({length: Math.max(head.length, ...rows.map(r => r.length))}, (_, k) => k);
+      const body = rows.map(r => `<tr>${cols.map(k => `<td${cls(k)}>${inline(r[k] || '')}</td>`).join('')}</tr>`).join('');
+      out.push(`<div class="tbl"><table><thead><tr>${cols.map(k => `<th${cls(k)}>${inline(head[k] || '')}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`);
       continue;
     }
     if (/^\s*>/.test(l)){
@@ -286,6 +323,7 @@ function toast(msg, err){
 function setSync(cls, txt){
   $('#sync').className = `sync ${cls}`;
   $('#syncTxt').textContent = txt;
+  $('#sync').title = AUTH_NOTE[auth] || '';
 }
 
 /* ---------- tela ---------- */
@@ -298,7 +336,7 @@ function matches(c){
 }
 function itemHtml(c){
   const p = parseName(c.name);
-  const unread = comments(c) > (st.seen[c.id] || 0);
+  const unread = isUnread(c);
   return `<button type="button" class="item${c.id === st.sel && st.mode !== 'new' ? ' on' : ''}" data-act="open" data-id="${esc(c.id)}">
     <span class="item-top"><b class="code num">${esc(p.code || 'P---')}</b>${unread ? '<span class="dot">novo</span>' : ''}<span class="when num">${esc(fmtWhen(c.dateLastActivity))}</span></span>
     <span class="item-title">${esc(p.title)}</span></button>`;
@@ -314,6 +352,11 @@ function renderList(){
   html += `<button type="button" class="group-btn" data-act="toggle-arch" aria-expanded="${st.showArch}">Arquivo <span class="count num">${arch.length}</span></button>`;
   if (st.showArch) html += arch.map(itemHtml).join('');
   $('#side').innerHTML = html;
+  updateTitle();
+}
+function updateTitle(){
+  const n = st.cards.filter(c => !c.closed && listKey(c) !== 'arch' && isUnread(c)).length;
+  document.title = n ? `(${n}) ${BASE_TITLE}` : BASE_TITLE;
 }
 function renderEmpty(){
   $('#pane').dataset.card = '';
@@ -321,7 +364,7 @@ function renderEmpty(){
     <h2>Escreva o prompt aqui e rode no celular</h2>
     <ol>
       <li>Clique em <b>Novo prompt</b>, escreva e salve. Ele recebe um número, como P012.</li>
-      <li>No celular, abra um chat no Claude e mande <b>roda o P012</b>.</li>
+      <li>No iPhone, toque no ícone <b>Rodar prompt</b> e envie. O Claude roda o primeiro prompt da fila.</li>
       <li>O resultado aparece aqui, com o botão para copiar para Word ou Outlook.</li>
     </ol>
     <button type="button" class="btn primary" data-act="new">Novo prompt</button>
@@ -335,12 +378,15 @@ function renderFatal(title, text){
 function resultHtml(r, i, card){
   const incomplete = r.got < r.total;
   const body = `<div class="md" data-md="${i}">${renderMd(r.text)}</div>`;
+  const off = incomplete ? ' disabled title="Resultado incompleto"' : '';
   const tools = `<div class="row tools">
-    <button type="button" class="btn primary" data-act="copy-rich" data-i="${i}">Copiar formatado</button>
-    <button type="button" class="btn" data-act="copy-text" data-i="${i}">Copiar texto</button>
-    <button type="button" class="btn" data-act="download" data-i="${i}">Baixar .html</button>
+    <button type="button" class="btn primary" data-act="copy-rich" data-i="${i}"${off}>Copiar formatado</button>
+    <button type="button" class="btn" data-act="copy-text" data-i="${i}"${off}>Copiar texto</button>
+    <button type="button" class="btn" data-act="download" data-i="${i}"${off}>Baixar .html</button>
   </div>`;
-  const warn = incomplete ? `<div class="msg warn">Recebendo o resultado: ${r.got} de ${r.total} partes. O restante aparece aqui quando for gravado.</div>` : '';
+  const warn = !incomplete ? '' : stalled(r)
+    ? `<div class="msg warn">Resultado incompleto: chegaram ${r.got} de ${r.total} partes e nada novo há mais de ${STALL_MS / 60000} minutos. A sessão pode ter parado. Rode o prompt de novo: <code>${esc(command(card))}</code></div>`
+    : `<div class="msg warn">Recebendo o resultado: ${r.got} de ${r.total} partes. O restante aparece aqui quando for gravado.</div>`;
   const asks = askHtml(r.asks);
   const label = r.asks.length ? 'Resposta' : 'Resultado';
   if (i === 0) return `<section class="block">${asks}<div class="block-h"><h3>${label}</h3><span class="fine num">${esc(fmtWhen(r.date))}</span></div>${warn}${tools}${body}</section>`;
@@ -373,14 +419,15 @@ function renderDetail(){
     : `${key === 'done' ? '<button type="button" class="btn" data-act="rerun">Rodar de novo</button>' : ''}<button type="button" class="btn" data-act="archive">Arquivar</button>`;
   let content = '<p class="fine">Carregando…</p>';
   if (d){
-    const results = d.results, pending = d.pending, cmd = esc(command(card));
+    const results = d.results, pending = d.pending, hint = runHint(card);
+    const partial = results.length && results[0].got < results[0].total;
     const waiting = pending.length
       ? `<section class="block pending"><h3>Pergunta aguardando resposta</h3>${askHtml(pending)}
-          <div class="row"><span class="fine">No celular, mande: <code>${cmd}</code></span><span class="spacer"></span><button type="button" class="btn" data-act="cancel-run">Cancelar pergunta</button></div></section>`
-      : key !== 'todo' ? ''
+          <div class="row"><span class="fine">${hint}</span><span class="spacer"></span><button type="button" class="btn" data-act="cancel-run">Cancelar pergunta</button></div></section>`
+      : key !== 'todo' || partial ? ''
       : results.length
-        ? `<div class="wait"><span><b>Na fila para rodar de novo.</b> No celular, mande: <code>${cmd}</code></span><button type="button" class="btn" data-act="cancel-run">Cancelar e voltar para Pronto</button></div>`
-        : `<div class="wait"><span><b>Aguardando o resultado.</b> No celular, mande: <code>${cmd}</code></span></div>`;
+        ? `<div class="wait"><span><b>Na fila para rodar de novo.</b> ${hint}</span><button type="button" class="btn" data-act="cancel-run">Cancelar e voltar para Pronto</button></div>`
+        : `<div class="wait"><span><b>Aguardando o resultado.</b> ${hint}</span></div>`;
     const promptBlock = `<details class="block" ${results.length ? '' : 'open'}><summary>Prompt</summary><pre class="prompt">${esc(d.desc)}</pre>
       <div class="row tools"><button type="button" class="btn" data-act="copy-prompt">Copiar prompt</button><button type="button" class="btn" data-act="edit">Editar</button></div></details>`;
     const list = results.map((r, i) => resultHtml(r, i, card));
@@ -392,7 +439,7 @@ function renderDetail(){
     ${st.notice ? `<div class="msg ok">${esc(st.notice)}</div>` : ''}
     <div class="head">
       <div class="head-t"><span class="code big num">${esc(p.code)}</span><span class="pill ${key}">${esc(LIST_NAMES[key])}</span><h2>${esc(p.title)}</h2></div>
-      <div class="row"><button type="button" class="btn" data-act="copy-cmd">Copiar comando</button>${moves}</div>
+      <div class="row">${moves}</div>
     </div>
     ${content}
   </div>`;
@@ -433,9 +480,20 @@ function count(){
 }
 
 /* ---------- dados ---------- */
-async function refresh(){
-  if (st.loading || !st.conn) return;
-  st.loading = true;
+/* Sem force, a atualização automática pula se já houver outra em curso.
+   Com force, espera a que está em curso e lê de novo, para ver o que acabou de ser gravado. */
+let running = null;
+async function refresh(force){
+  if (!st.conn) return;
+  if (running){
+    if (!force) return;
+    await running;
+  }
+  running = readBoard();
+  await running;
+  running = null;
+}
+async function readBoard(){
   setSync('busy', 'Atualizando…');
   try {
     const b = await api('GET', `/boards/${BOARD}`, {fields: 'name', lists: 'open', list_fields: 'name', cards: 'all', card_fields: CARD_FIELDS});
@@ -450,12 +508,22 @@ async function refresh(){
     setSync('', `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`);
     renderList();
     await syncDetail();
+    checkStall();
   } catch(e){
     st.failed = e;
     setSync('err', `Falhou: ${e.message}`);
     if (e.status === 401 || e.status === 404) renderFatal('Conexão com o Trello recusada', 'Abra a Carteira, confira a conexão neste navegador e volte para esta aba.');
     else if (!st.lastOk) renderFatal('Não consegui ler o quadro Prompts', `${e.message}. A página tenta de novo a cada 30 segundos.`);
-  } finally { st.loading = false; }
+  }
+}
+/* Sem resposta nova o cartão não é redesenhado: isto troca o aviso quando a sessão para. */
+function checkStall(){
+  const card = st.mode === 'view' && st.sel ? findCard(st.sel) : null;
+  const r = card && st.det[card.id] && st.det[card.id].results[0];
+  const now = r && stalled(r) ? `${card.id}|${r.date}` : '';
+  if (now === st.stall) return;
+  st.stall = now;
+  if (now) renderDetail();
 }
 async function loadDetail(card){
   const [c, acts] = await Promise.all([
@@ -473,7 +541,7 @@ async function syncDetail(){
   await loadDetail(card);
   if (st.sel !== card.id || st.mode !== 'view') return;
   st.notice = null;
-  markSeen(card);
+  if (document.visibilityState === 'visible') markSeen(card);
   renderDetail();
   renderList();
 }
@@ -523,8 +591,8 @@ async function saveNew(){
     const c = await api('POST', '/cards', {idList: st.lists.todo.id, name: `${code} - ${v.title}`, desc: v.text, pos: 'top'});
     drop(DRAFT_KEY);
     st.mode = 'view';
-    await refresh();
-    await openCard(c.id, `${code} salvo. No celular, mande: roda o ${code}`);
+    await refresh(true);
+    await openCard(c.id, `${code} salvo. No iPhone, toque em Rodar prompt e envie.`);
   });
 }
 async function saveEdit(card){
@@ -535,7 +603,7 @@ async function saveEdit(card){
     await api('PUT', `/cards/${card.id}`, {name: code ? `${code} - ${v.title}` : v.title, desc: v.text});
     delete st.det[card.id];
     st.mode = 'view';
-    await refresh();
+    await refresh(true);
     await openCard(card.id, 'Prompt atualizado.');
   });
 }
@@ -543,7 +611,7 @@ async function moveTo(card, key, msg){
   await run(async () => {
     await api('PUT', `/cards/${card.id}`, {idList: st.lists[key].id, pos: 'top'});
     st.notice = null;
-    await refresh();
+    await refresh(true);
     toast(msg);
   });
 }
@@ -558,8 +626,8 @@ async function saveAsk(card){
     await api('PUT', `/cards/${card.id}`, {idList: st.lists.todo.id, pos: 'top'});
     delete st.askDraft[card.id];
     delete st.det[card.id];
-    await refresh();
-    await openCard(card.id, `Pergunta salva. No celular, mande: ${command(card)}`);
+    await refresh(true);
+    await openCard(card.id, 'Pergunta salva. No iPhone, toque em Rodar prompt e envie.');
   });
 }
 async function cancelRun(card){
@@ -569,7 +637,7 @@ async function cancelRun(card){
     if (pending.length) st.askDraft[card.id] = pending.map(q => q.text).join('\n\n');
     await api('PUT', `/cards/${card.id}`, {idList: st.lists.done.id, pos: 'top'});
     delete st.det[card.id];
-    await refresh();
+    await refresh(true);
     await openCard(card.id);
     toast('Cancelado. O cartão voltou para Pronto.');
   });
@@ -617,7 +685,6 @@ const actions = {
   'save-new': saveNew,
   'save-edit'(){ const c = findCard(st.sel); if (c) saveEdit(c); },
   edit(){ const c = findCard(st.sel); if (c){ st.mode = 'edit'; renderComposer(c); } },
-  async 'copy-cmd'(){ const c = findCard(st.sel); if (c) toast(await copyPlain(command(c)) ? `Copiado: ${command(c)}` : 'Não consegui copiar.', false); },
   async 'copy-prompt'(){
     const c = findCard(st.sel), d = c && st.det[c.id];
     if (d) toast(await copyPlain(d.desc) ? 'Prompt copiado.' : 'Não consegui copiar.');
@@ -671,7 +738,10 @@ document.addEventListener('keydown', e => {
 let qt;
 $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { st.q = e.target.value.trim(); renderList(); }, 120); });
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && Date.now() - st.lastOk > 10000) refresh();
+  if (document.visibilityState !== 'visible') return;
+  const card = st.mode === 'view' && st.sel ? findCard(st.sel) : null;
+  if (card && st.det[card.id]){ markSeen(card); renderList(); }
+  if (Date.now() - st.lastOk > 10000) refresh();
 });
 
 /* ---------- início ---------- */
@@ -688,7 +758,7 @@ async function boot(){
     const c = st.cards.find(x => !x.closed && parseName(x.name).code === m[1]);
     if (c) await openCard(c.id);
   }
-  setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, POLL_MS);
+  setInterval(() => { if (document.visibilityState === 'visible' || Date.now() - st.lastOk >= POLL_HIDDEN_MS) refresh(); }, POLL_MS);
 }
 boot();
 })();

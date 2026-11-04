@@ -3,6 +3,7 @@
 Página estática (um único `index.html`) para acompanhar e editar o quadro **Carteira Hidráulica** do Trello: quadro por etapa, resumo, grade e lembretes.
 
 - **Sem dados neste repositório.** A página fala direto com a API oficial do Trello (`api.trello.com`) no navegador de quem abre, com chave e token guardados só naquele navegador (localStorage). Não há servidor nem scripts ou fontes externas.
+- **Token:** a página envia chave e token no cabeçalho `Authorization`, fora do endereço. Se o navegador ou o Trello recusarem o cabeçalho, ela volta a usar o endereço. Passe o mouse sobre o texto de sincronização para ver qual dos dois está em uso.
 - **Edição:** criar tarefa, registrar andamento, mover de etapa (arrastando o cartão ou pelo painel da tarefa), lembrete, aguardando, prioridade, plataforma, em andamento, referências, checklist, concluir e arquivar. Antes de gravar a descrição, a página relê o cartão para não apagar mudanças feitas em outro lugar.
 - A descrição do cartão segue o formato da carteira: `**Aguardando:**`, `**Refs:**`, `**Prioridade:**`, `**Criada em:**` e o histórico abaixo de `**Histórico**`, com a linha mais recente no topo (`dd/mm - texto`).
 - Atualiza sozinha a cada 5 minutos com a aba aberta, ao voltar para a aba, ou pelo botão **Atualizar** (atalho `R`). Atalhos: `/` busca, `N` nova tarefa.
@@ -14,9 +15,11 @@ A pasta `prompts/` é a página de prompts, aberta pela aba **Prompts** da Carte
 - Usa a mesma conexão da Carteira. Em navegador novo, conecte a Carteira uma vez e volte para a aba.
 - O prompt fica na descrição do cartão, com número no título (`P012 - Título`).
 - O resultado fica nos comentários. Resultado longo vai em partes, com `[parte 1/3]` na primeira linha, e a página junta tudo.
-- Pergunta sobre um resultado fica em comentário com `[pergunta]` na primeira linha. O cartão volta para **A rodar**, e o comando no celular é o mesmo.
+- Para rodar, use o ícone **Rodar prompt** no iPhone, que abre um chat novo com `roda`. Esse comando pega o primeiro cartão de **A rodar**. Para escolher outro, mande `roda o P012`. `roda tudo` roda a fila inteira.
+- Pergunta sobre um resultado fica em comentário com `[pergunta]` na primeira linha. O cartão volta para o topo de **A rodar**, e o comando é o mesmo.
 - **Cancelar** apaga a pergunta pendente ou desfaz **Rodar de novo**, e o cartão volta para **Pronto** sem perder os resultados.
-- Atualiza a cada 30 segundos com a aba aberta. Atalhos: `N` novo prompt, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
+- Resultado incompleto fica com os botões de copiar desligados. Se nada novo chegar em 10 minutos, a página avisa que a sessão pode ter parado.
+- Atualiza a cada 30 segundos com a aba visível e a cada 2 minutos com a aba escondida. A quantidade de resultados novos aparece no título da aba. Atalhos: `N` novo prompt, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
 
 ## Primeiro acesso em cada navegador
 

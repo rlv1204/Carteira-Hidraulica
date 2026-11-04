@@ -415,6 +415,7 @@ button.ring.ok:hover{background:var(--accent)}
 /* ---------- configuração ---------- */
 const STORE = 'ch.dash.trello';
 const UI_STORE = 'ch.dash.ui';
+const PERM_STORE = 'ch.dash.perm';
 const DEFAULT_BOARD = '7dtAJCuF';
 const API = 'https://api.trello.com/1';
 const REFRESH_MS = 5 * 60 * 1000;
@@ -990,7 +991,7 @@ function renderSetup(msg){
   });
   const back = $('#btnBack'); if (back) back.addEventListener('click', () => { ui.setup = false; render(); });
   const fg = $('#btnForget'); if (fg) fg.addEventListener('click', () => {
-    try { localStorage.removeItem(STORE); } catch(e){}
+    try { localStorage.removeItem(STORE); localStorage.removeItem(PERM_STORE); } catch(e){}
     conn = null; board = null; lastOk = null; perm = {checked: false, write: false};
     renderSetup({ok: true, text: 'Chave e token apagados deste navegador.'}); setSync();
   });
@@ -1000,6 +1001,7 @@ function renderSetup(msg){
 function setSync(){
   const el = $('#sync'), tx = $('#syncTxt');
   el.className = 'sync' + (saving || loading ? ' busy' : lastErr ? ' err' : !lastOk ? ' off' : '');
+  el.title = AUTH_NOTE[auth] || '';
   if (saving) tx.textContent = 'Salvando no Trello…';
   else if (loading && !board) tx.textContent = 'Lendo o Trello…';
   else if (loading) tx.textContent = 'Atualizando…';
@@ -1051,14 +1053,36 @@ function errText(status, tx){
   if (status === 400) return (tx || 'requisição inválida').slice(0, 120);
   return `Trello respondeu ${status}`;
 }
-async function api(method, path, params = {}){
-  const qs = new URLSearchParams({key: conn.key, token: conn.token});
+/* Chave e token vão no cabeçalho Authorization, fora do endereço.
+   Se o navegador ou o Trello recusarem o cabeçalho, a página volta a usar o endereço. */
+let auth = 'test';   // test: sem resposta ainda; header: funcionou; url: cabeçalho recusado
+const AUTH_NOTE = {header: 'Conexão: token protegido no cabeçalho', url: 'Conexão: token no endereço, o Trello não aceitou o cabeçalho'};
+function send(method, path, params, header){
+  const qs = new URLSearchParams(header ? {} : {key: conn.key, token: conn.token});
   const opts = {method, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer'};
+  if (header) opts.headers = {Authorization: `OAuth oauth_consumer_key="${conn.key}", oauth_token="${conn.token}"`};
   if (method === 'GET' || method === 'DELETE') Object.entries(params).forEach(([k, v]) => qs.set(k, v));
   else opts.body = new URLSearchParams(params);
-  let r;
-  try { r = await fetch(`${API}${path}?${qs}`, opts); }
-  catch(e){ throw new Error('sem conexão com api.trello.com'); }
+  const q = qs.toString();
+  return fetch(`${API}${path}${q ? `?${q}` : ''}`, opts);
+}
+async function request(method, path, params){
+  let r = null;
+  if (auth !== 'url'){
+    try { r = await send(method, path, params, true); }
+    catch(e){ if (auth === 'header') throw new Error('sem conexão com api.trello.com'); }
+    if (r && r.ok) auth = 'header';
+    else if (r && r.status === 401 && auth === 'test') r = null;
+  }
+  if (!r){
+    try { r = await send(method, path, params, false); }
+    catch(e){ throw new Error('sem conexão com api.trello.com'); }
+    if (r.ok) auth = 'url';
+  }
+  return r;
+}
+async function api(method, path, params = {}){
+  const r = await request(method, path, params);
   if (!r.ok){ const tx = await r.text().catch(() => ''); const e = new Error(errText(r.status, tx)); e.status = r.status; throw e; }
   const ct = r.headers.get('content-type') || '';
   return ct.includes('json') ? r.json() : r.text();
@@ -1085,11 +1109,16 @@ async function write(okMsg, fn, opts = {}){
     return false;
   }
 }
+/* Esta consulta leva o token no caminho do endereço, por isso roda uma vez só por token. */
 async function checkPerm(){
+  const tail = conn.token.slice(-8);
+  const saved = load(PERM_STORE, null);
+  if (saved && saved.tail === tail){ perm = {checked: true, write: saved.write}; return; }
   try {
     const tk = await api('GET', `/tokens/${encodeURIComponent(conn.token)}`, {fields: 'permissions'});
     const ps = Array.isArray(tk.permissions) ? tk.permissions : [];
     perm = {checked: true, write: ps.some(p => p.modelType === 'Board' && p.write)};
+    save(PERM_STORE, {tail, write: perm.write});
   } catch(e){
     perm = {checked: true, write: e.status !== 401};   // na dúvida, deixa editar: se não puder, o Trello recusa e o painel avisa
   }
