@@ -81,7 +81,7 @@ function groupResults(actions){
     const m = /^\s*\[parte\s+(\d+)\s*\/\s*(\d+)\]\s*\r?\n?/i.exec(it.text);
     if (!m){ out.push({date: it.date, text: it.text, total: 1, got: 1}); cur = null; return; }
     const part = Number(m[1]), total = Number(m[2]), body = it.text.slice(m[0].length);
-    if (!cur || cur.total !== total || part === 1 || cur.parts[part]){
+    if (!cur || cur.total !== total || cur.parts[part]){
       cur = {date: it.date, total, parts: {}};
       out.push(cur);
     }
