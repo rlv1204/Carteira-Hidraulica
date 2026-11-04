@@ -11,12 +11,55 @@ const CONN_KEY = 'ch.dash.trello';
 const UI_KEY = 'ch.dash.ui';
 const SEEN_KEY = 'ch.prompts.seen';
 const DRAFT_KEY = 'ch.prompts.draft';
+const TASK_KEY = 'ch.prompts.task';
+const CARTEIRA = '7dtAJCuF';
 const LIST_NAMES = {todo: 'A rodar', done: 'Pronto', arch: 'Arquivo'};
 const POLL_MS = 30000;
 const POLL_HIDDEN_MS = 120000;
 const STALL_MS = 10 * 60000;
 const LIMIT = 16384;
 const CARD_FIELDS = 'name,idList,closed,dateLastActivity,badges,pos';
+/* Modelos do Novo prompt: só os campos a preencher. O formato de cada entrega vem das preferências e skills. */
+const MODELS = [
+  {id: 'gm', label: 'GM', title: 'GM', text: `Elaborar GM no modelo validado.
+
+Equipamento:
+TAG:
+Referência (nº SAP):
+Situação atual:
+Evidência ou condição constatada:
+O que será feito:
+Arquivos de apoio (repositório ou Drive):`},
+  {id: 'pqs', label: 'PQS (Anexo I)', title: 'PQS', text: `Elaborar PQS, Anexo I, de licitação de serviço.
+
+Plataforma:
+Equipamento e TAG:
+Escopo do serviço:
+Limites de bateria:
+Prazo:
+Anexo I modelo:
+Diagramas e catálogos (repositório ou Drive):`},
+  {id: 'sap', label: 'Nota SAP', title: 'Nota SAP', text: `Elaborar nota SAP, com título de até 40 caracteres e texto breve.
+
+Equipamento e TAG:
+Problema ou serviço:
+Causa ou contexto:
+Ação solicitada:`},
+  {id: 'patec', label: 'PATEC', title: 'PATEC', text: `Elaborar o e-mail resumido de parecer técnico (PATEC).
+
+Destinatário:
+Item (PN, descrição ou RC):
+Fornecedores:
+Propostas e catálogos (repositório ou Drive):`},
+  {id: 'comp', label: 'Pesquisa de componente', title: 'Pesquisa de componente', text: `Pesquisar componente hidráulico no formato padrão.
+
+Componente e fabricante:
+Código atual:
+Dados da plaqueta ou do diagrama:
+Objetivo (identificar, especificar, comparar ou achar equivalente):
+Conexões e interfaces:
+Arquivos de apoio (repositório ou Drive):`}
+];
 
 const $ = (s, r = document) => r.querySelector(s);
 const BASE_TITLE = document.title;
@@ -32,7 +75,7 @@ const st = {
   conn: load(CONN_KEY, null),
   lists: {}, cards: [], det: {},
   sel: null, mode: 'view', notice: null,
-  q: '', showArch: false, lastOk: 0, saving: false, failed: null, askDraft: {}, stall: '',
+  q: '', showArch: false, lastOk: 0, saving: false, failed: null, askDraft: {}, stall: '', reg: null, tasks: null,
   seen: load(SEEN_KEY, {})
 };
 
@@ -130,6 +173,36 @@ function parseThread(actions){
     cur.text = Object.keys(cur.parts).map(Number).sort((a, b) => a - b).map(n => cur.parts[n]).join('\n');
   });
   return {results: results.reverse(), pending: open};
+}
+
+/* ---------- histórico da Carteira: mesmo formato que a página da Carteira grava ---------- */
+const FIELD_RE = /^\*\*\s*(Aguardando|Refs|Prioridade|Criada em)\s*:\s*\*\*\s*(.*)$/i;
+const HIST_RE = /^\*\*\s*Hist[oó]rico\s*\*\*\s*$/i;
+const FKEY = {aguardando: 'waiting', refs: 'refs', prioridade: 'priority', 'criada em': 'created'};
+function splitDesc(desc){
+  const lines = String(desc || '').split(/\r?\n/);
+  const h = lines.findIndex(l => HIST_RE.test(l.trim()));
+  const head = h >= 0 ? lines.slice(0, h) : lines;
+  const f = {waiting: '', refs: '', priority: '', created: ''}, extra = [];
+  head.forEach(raw => { const m = FIELD_RE.exec(raw.trim()); if (m) f[FKEY[m[1].toLowerCase()]] = m[2].trim(); else if (raw.trim()) extra.push(raw.trimEnd()); });
+  return {f, extra, hist: h >= 0 ? lines.slice(h + 1) : []};
+}
+function joinDesc(s){
+  const out = [];
+  if (s.f.waiting) out.push(`**Aguardando:** ${s.f.waiting}`);
+  if (s.f.refs) out.push(`**Refs:** ${s.f.refs}`);
+  if (s.f.priority && s.f.priority !== 'Média') out.push(`**Prioridade:** ${s.f.priority}`);
+  if (s.f.created) out.push(`**Criada em:** ${s.f.created}`);
+  out.push(...s.extra);
+  const hist = s.hist.slice();
+  while (hist.length && !hist[0].trim()) hist.shift();
+  while (hist.length && !hist[hist.length - 1].trim()) hist.pop();
+  if (hist.length) out.push('', '**Histórico**', ...hist);
+  return out.join('\n').trim();
+}
+function todayMark(){
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 /* ---------- Markdown: o texto é escapado antes de virar HTML ---------- */
@@ -383,7 +456,8 @@ function resultHtml(r, i, card){
     <button type="button" class="btn primary" data-act="copy-rich" data-i="${i}"${off}>Copiar formatado</button>
     <button type="button" class="btn" data-act="copy-text" data-i="${i}"${off}>Copiar texto</button>
     <button type="button" class="btn" data-act="download" data-i="${i}"${off}>Baixar .html</button>
-  </div>`;
+    <button type="button" class="btn" data-act="reg-open" data-i="${i}"${off}>Registrar na carteira</button>
+  </div>${st.reg && st.reg.card === card.id && st.reg.date === r.date ? regHtml() : ''}`;
   const warn = !incomplete ? '' : stalled(r)
     ? `<div class="msg warn">Resultado incompleto: chegaram ${r.got} de ${r.total} partes e nada novo há mais de ${STALL_MS / 60000} minutos. A sessão pode ter parado. Rode o prompt de novo: <code>${esc(command(card))}</code></div>`
     : `<div class="msg warn">Recebendo o resultado: ${r.got} de ${r.total} partes. O restante aparece aqui quando for gravado.</div>`;
@@ -391,6 +465,31 @@ function resultHtml(r, i, card){
   const label = r.asks.length ? 'Resposta' : 'Resultado';
   if (i === 0) return `<section class="block">${asks}<div class="block-h"><h3>${label}</h3><span class="fine num">${esc(fmtWhen(r.date))}</span></div>${warn}${tools}${body}</section>`;
   return `<details class="block old"><summary>${label} anterior · <span class="num">${esc(fmtWhen(r.date))}</span></summary>${asks}${warn}${tools}${body}</details>`;
+}
+function taskMatches(){
+  const q = st.reg ? st.reg.q.trim().toLowerCase() : '';
+  return (st.tasks || []).filter(t => !q || t.name.toLowerCase().includes(q));
+}
+function taskOptions(){
+  return taskMatches().map(t => `<option value="${esc(t.id)}"${st.reg && t.id === st.reg.task ? ' selected' : ''}>${esc(t.name)}</option>`).join('');
+}
+function regTarget(){
+  const t = st.reg && (st.tasks || []).find(x => x.id === st.reg.task);
+  return t ? `Vai gravar em: ${t.name}` : 'Escolha uma tarefa na lista.';
+}
+function regHtml(){
+  const r = st.reg;
+  if (!st.tasks) return '<div class="reg"><p class="fine">Carregando as tarefas da Carteira…</p></div>';
+  return `<div class="reg">
+    <label class="fld"><span>Tarefa da Carteira</span>
+      <input class="inp" id="regQ" placeholder="Buscar tarefa…" autocomplete="off" value="${esc(r.q)}"></label>
+    <select class="inp" id="regTask" size="6" aria-label="Tarefa da Carteira">${taskOptions()}</select>
+    <label class="fld"><span>Linha do histórico <span class="fine num">entra como ${esc(todayMark())} - texto</span></span>
+      <input class="inp" id="regText" maxlength="500" autocomplete="off" value="${esc(r.text)}"></label>
+    <div class="row"><span class="fine" id="regPick">${esc(regTarget())}</span><span class="spacer"></span>
+      <button type="button" class="btn ghost" data-act="reg-close">Cancelar</button>
+      <button type="button" class="btn primary" data-act="reg-save">Gravar na tarefa</button></div>
+  </div>`;
 }
 function askHtml(list){
   return list.map(a => `<div class="ask-q"><span class="fine num">Sua pergunta · ${esc(fmtWhen(a.date))}</span><pre class="prompt">${esc(a.text)}</pre></div>`).join('');
@@ -412,8 +511,8 @@ function renderDetail(){
   const same = pane.dataset.card === card.id && pane.dataset.loaded === '1';
   const scroll = same ? pane.scrollTop : 0;
   const openOld = same ? [...pane.querySelectorAll('details')].map(x => x.open) : [];
-  const typing = same && document.activeElement && document.activeElement.id === 'askText'
-    ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+  const act = document.activeElement;
+  const typing = same && act && ['askText', 'regQ', 'regText'].includes(act.id) ? [act.id, act.selectionStart, act.selectionEnd] : null;
   const moves = key === 'arch'
     ? `<button type="button" class="btn" data-act="restore">Restaurar</button>`
     : `${key === 'done' ? '<button type="button" class="btn" data-act="rerun">Rodar de novo</button>' : ''}<button type="button" class="btn" data-act="archive">Arquivar</button>`;
@@ -447,7 +546,7 @@ function renderDetail(){
   pane.dataset.loaded = d ? '1' : '';
   [...pane.querySelectorAll('details')].forEach((x, i) => { if (openOld[i] !== undefined) x.open = openOld[i]; });
   pane.scrollTop = scroll;
-  if (typing && $('#askText')){ const t = $('#askText'); t.focus(); t.setSelectionRange(typing[0], typing[1]); }
+  if (typing && $(`#${typing[0]}`)){ const t = $(`#${typing[0]}`); t.focus(); t.setSelectionRange(typing[1], typing[2]); }
 }
 function renderComposer(card){
   const editing = !!card;
@@ -460,6 +559,8 @@ function renderComposer(card){
   $('#pane').innerHTML = `<div class="card composer">
     <button type="button" class="btn ghost back" data-act="cancel">‹ Voltar</button>
     <h2>${editing ? `Editar ${esc(parseName(card.name).code)}` : 'Novo prompt'}</h2>
+    ${editing ? '' : `<label class="fld"><span>Modelo <span class="fine">opcional, coloca no prompt os campos para preencher</span></span>
+      <select class="inp" id="pModel"><option value="">Sem modelo</option>${MODELS.map(m => `<option value="${m.id}">${esc(m.label)}</option>`).join('')}</select></label>`}
     <label class="fld"><span>Título <span class="fine">opcional, aparece na lista</span></span>
       <input class="inp" id="pTitle" maxlength="120" autocomplete="off" value="${esc(title)}"></label>
     <label class="fld"><span>Prompt <span class="fine">cite aqui os arquivos do repositório ou do Drive</span></span>
@@ -552,6 +653,7 @@ function markSeen(card){
 }
 async function openCard(id, notice){
   st.sel = id;
+  st.reg = null;
   st.mode = 'view';
   st.notice = notice || null;
   const card = findCard(id);
@@ -643,6 +745,62 @@ async function cancelRun(card){
   });
 }
 
+/* Registrar na carteira: grava uma linha no histórico da tarefa, sem mexer em etapa, data ou prioridade. */
+async function openReg(el){
+  const r = resultAt(el);
+  if (!r || !r.res) return;
+  if (st.reg && st.reg.date === r.res.date){ st.reg = null; renderDetail(); return; }
+  st.reg = {card: r.card.id, date: r.res.date, q: '', task: '', text: parseName(r.card.name).title};
+  st.tasks = null;
+  renderDetail();
+  try {
+    const board = (st.conn && st.conn.board) || CARTEIRA;
+    const list = await api('GET', `/boards/${encodeURIComponent(board)}/cards/open`, {fields: 'name,dateLastActivity'});
+    st.tasks = list.sort((a, b) => String(b.dateLastActivity).localeCompare(String(a.dateLastActivity)));
+    const saved = load(TASK_KEY, {})[r.card.id];
+    if (st.reg && st.tasks.some(t => t.id === saved)) st.reg.task = saved;
+  } catch(e){
+    st.reg = null;
+    toast(`Não abri as tarefas: ${e.message}`, true);
+  }
+  renderDetail();
+  if ($('#regQ')) $('#regQ').focus();
+}
+async function saveReg(){
+  const r = st.reg;
+  if (!r) return;
+  const text = r.text.replace(/\s+/g, ' ').trim();
+  const task = (st.tasks || []).find(t => t.id === r.task);
+  if (!task){ toast('Escolha a tarefa da Carteira.', true); return; }
+  if (!text){ toast('Escreva a linha do histórico.', true); return; }
+  await run(async () => {
+    const fresh = await api('GET', `/cards/${task.id}`, {fields: 'desc'});
+    const s = splitDesc(fresh.desc || '');
+    s.hist.unshift(`${todayMark()} - ${text}`);
+    const desc = joinDesc(s);
+    if (desc.length > LIMIT) throw new Error('a descrição da tarefa passaria do limite do Trello');
+    await api('PUT', `/cards/${task.id}`, {desc});
+    const map = load(TASK_KEY, {});
+    map[r.card] = task.id;
+    save(TASK_KEY, map);
+    st.reg = null;
+    renderDetail();
+    toast(`Registrado em ${task.name}`);
+  });
+}
+function applyModel(id){
+  const m = MODELS.find(x => x.id === id), ta = $('#pText'), ti = $('#pTitle');
+  if (!m) return;
+  ta.value = ta.value.trim() ? `${m.text}\n\n${ta.value}` : m.text;
+  if (!ti.value.trim()) ti.value = m.title;
+  $('#pModel').value = '';
+  count();
+  save(DRAFT_KEY, {title: ti.value, text: ta.value});
+  const end = m.text.indexOf('\n', m.text.indexOf('\n\n') + 2);
+  ta.focus();
+  ta.setSelectionRange(end, end);
+}
+
 /* ---------- eventos ---------- */
 function startNew(){
   st.mode = 'new';
@@ -653,6 +811,7 @@ function startNew(){
 function backToList(){
   st.mode = 'view';
   st.sel = null;
+  st.reg = null;
   st.notice = null;
   history.replaceState(null, '', location.pathname + location.search);
   $('#layout').classList.remove('open');
@@ -698,6 +857,9 @@ const actions = {
     if (r && r.node) toast(await copyPlain(r.node.innerText) ? 'Texto copiado.' : 'Não consegui copiar.');
   },
   download(el){ const r = resultAt(el); if (r && r.res) download(r.card, r.res.text); },
+  'reg-open': openReg,
+  'reg-close'(){ st.reg = null; renderDetail(); },
+  'reg-save': saveReg,
   rerun(){ const c = findCard(st.sel); if (c) moveTo(c, 'todo', 'Prompt voltou para A rodar.'); },
   'cancel-run'(){ const c = findCard(st.sel); if (c) cancelRun(c); },
   ask(){ const c = findCard(st.sel); if (c) saveAsk(c); },
@@ -712,8 +874,24 @@ document.addEventListener('click', e => {
   const fn = actions[el.dataset.act];
   if (fn) fn(el);
 });
+function showReg(){
+  const list = $('#regTask'), pick = $('#regPick');
+  if (list) list.innerHTML = taskOptions();
+  if (pick) pick.textContent = regTarget();
+}
+document.addEventListener('change', e => {
+  if (e.target.id === 'pModel') applyModel(e.target.value);
+  if (e.target.id === 'regTask' && st.reg){ st.reg.task = e.target.value; showReg(); }
+});
 document.addEventListener('input', e => {
   if (e.target.id === 'askText'){ if (st.sel) st.askDraft[st.sel] = e.target.value; return; }
+  if (e.target.id === 'regText' && st.reg){ st.reg.text = e.target.value; return; }
+  if (e.target.id === 'regQ' && st.reg){
+    st.reg.q = e.target.value;
+    if (!taskMatches().some(t => t.id === st.reg.task)) st.reg.task = '';
+    showReg();
+    return;
+  }
   if (e.target.id !== 'pText' && e.target.id !== 'pTitle') return;
   count();
   if (st.mode === 'new') save(DRAFT_KEY, {title: $('#pTitle').value, text: $('#pText').value});
@@ -729,7 +907,7 @@ document.addEventListener('keydown', e => {
     (st.mode === 'edit' ? actions['save-edit'] : saveNew)();
     return;
   }
-  if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
   const k = e.key.toLowerCase();
   if (k === 'n'){ e.preventDefault(); startNew(); }
   else if (k === 'r'){ e.preventDefault(); refresh(); }

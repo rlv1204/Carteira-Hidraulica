@@ -175,6 +175,8 @@ details.block>summary{cursor:pointer;font-weight:700}
 .inp{width:100%;border:1px solid var(--line-2);border-radius:4px;background:var(--surface);padding:7px 9px;font-weight:400;font-size:13.5px}
 textarea.inp{resize:vertical;min-height:260px;line-height:1.45}
 textarea.ask-in{min-height:76px}
+select.inp{padding:4px 6px}
+.reg{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2)}
 .clip{position:fixed;left:-9999px;top:0}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-weight:600;font-size:12.5px;z-index:40;box-shadow:var(--shadow-h);max-width:calc(100vw - 32px)}
 .toast.err{background:var(--late);color:var(--on-late)}
