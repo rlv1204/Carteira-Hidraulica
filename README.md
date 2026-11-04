@@ -14,6 +14,8 @@ A pasta `prompts/` é a página de prompts, aberta pela aba **Prompts** da Carte
 - Usa a mesma conexão da Carteira. Em navegador novo, conecte a Carteira uma vez e volte para a aba.
 - O prompt fica na descrição do cartão, com número no título (`P012 - Título`).
 - O resultado fica nos comentários. Resultado longo vai em partes, com `[parte 1/3]` na primeira linha, e a página junta tudo.
+- Pergunta sobre um resultado fica em comentário com `[pergunta]` na primeira linha. O cartão volta para **A rodar**, e o comando no celular é o mesmo.
+- **Cancelar** apaga a pergunta pendente ou desfaz **Rodar de novo**, e o cartão volta para **Pronto** sem perder os resultados.
 - Atualiza a cada 30 segundos com a aba aberta. Atalhos: `N` novo prompt, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
 
 ## Primeiro acesso em cada navegador

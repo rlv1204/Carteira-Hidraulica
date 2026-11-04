@@ -29,7 +29,7 @@ const st = {
   conn: load(CONN_KEY, null),
   lists: {}, cards: [], det: {},
   sel: null, mode: 'view', notice: null,
-  q: '', showArch: false, lastOk: 0, loading: false, saving: false, failed: null,
+  q: '', showArch: false, lastOk: 0, loading: false, saving: false, failed: null, askDraft: {},
   seen: load(SEEN_KEY, {})
 };
 
@@ -70,27 +70,31 @@ function fmtWhen(iso){
   return d.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}).replace(',', '');
 }
 
-/* Resultado longo chega em comentários que começam com [parte 1/3]. */
-function groupResults(actions){
+/* Comentário que começa com [pergunta] é do Roney. Os demais são resultado.
+   Resultado longo chega em comentários que começam com [parte 1/3]. */
+function parseThread(actions){
   const items = (actions || [])
-    .map(a => ({date: a.date, text: (a.data && a.data.text) || ''}))
+    .map(a => ({id: a.id, date: a.date, text: (a.data && a.data.text) || ''}))
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  const out = [];
-  let cur = null;
+  const results = [];
+  let cur = null, open = [];
+  const add = r => { r.asks = open; open = []; results.push(r); };
   items.forEach(it => {
+    const q = /^\s*\[pergunta\]\s*\r?\n?/i.exec(it.text);
+    if (q){ open.push({id: it.id, date: it.date, text: it.text.slice(q[0].length).trim()}); return; }
     const m = /^\s*\[parte\s+(\d+)\s*\/\s*(\d+)\]\s*\r?\n?/i.exec(it.text);
-    if (!m){ out.push({date: it.date, text: it.text, total: 1, got: 1}); cur = null; return; }
+    if (!m){ add({date: it.date, text: it.text, total: 1, got: 1}); cur = null; return; }
     const part = Number(m[1]), total = Number(m[2]), body = it.text.slice(m[0].length);
     if (!cur || cur.total !== total || cur.parts[part]){
       cur = {date: it.date, total, parts: {}};
-      out.push(cur);
+      add(cur);
     }
     cur.parts[part] = body;
     cur.date = it.date;
     cur.got = Object.keys(cur.parts).length;
     cur.text = Object.keys(cur.parts).map(Number).sort((a, b) => a - b).map(n => cur.parts[n]).join('\n');
   });
-  return out.reverse();
+  return {results: results.reverse(), pending: open};
 }
 
 /* ---------- Markdown: o texto é escapado antes de virar HTML ---------- */
@@ -337,8 +341,20 @@ function resultHtml(r, i, card){
     <button type="button" class="btn" data-act="download" data-i="${i}">Baixar .html</button>
   </div>`;
   const warn = incomplete ? `<div class="msg warn">Recebendo o resultado: ${r.got} de ${r.total} partes. O restante aparece aqui quando for gravado.</div>` : '';
-  if (i === 0) return `<section class="block"><div class="block-h"><h3>Resultado</h3><span class="fine num">${esc(fmtWhen(r.date))}</span></div>${warn}${tools}${body}</section>`;
-  return `<details class="block old"><summary>Resultado anterior · <span class="num">${esc(fmtWhen(r.date))}</span></summary>${warn}${tools}${body}</details>`;
+  const asks = askHtml(r.asks);
+  const label = r.asks.length ? 'Resposta' : 'Resultado';
+  if (i === 0) return `<section class="block">${asks}<div class="block-h"><h3>${label}</h3><span class="fine num">${esc(fmtWhen(r.date))}</span></div>${warn}${tools}${body}</section>`;
+  return `<details class="block old"><summary>${label} anterior · <span class="num">${esc(fmtWhen(r.date))}</span></summary>${asks}${warn}${tools}${body}</details>`;
+}
+function askHtml(list){
+  return list.map(a => `<div class="ask-q"><span class="fine num">Sua pergunta · ${esc(fmtWhen(a.date))}</span><pre class="prompt">${esc(a.text)}</pre></div>`).join('');
+}
+function askBox(card){
+  return `<section class="block ask">
+    <label class="fld"><span>Pergunta ou ajuste sobre este resultado <span class="fine">o Claude responde só a isto, sem refazer o prompt</span></span>
+      <textarea class="inp ask-in" id="askText" rows="3">${esc(st.askDraft[card.id] || '')}</textarea></label>
+    <div class="row"><span class="spacer"></span><button type="button" class="btn primary" data-act="ask">Salvar pergunta</button></div>
+  </section>`;
 }
 function renderDetail(){
   const pane = $('#pane');
@@ -350,17 +366,26 @@ function renderDetail(){
   const same = pane.dataset.card === card.id && pane.dataset.loaded === '1';
   const scroll = same ? pane.scrollTop : 0;
   const openOld = same ? [...pane.querySelectorAll('details')].map(x => x.open) : [];
+  const typing = same && document.activeElement && document.activeElement.id === 'askText'
+    ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
   const moves = key === 'arch'
     ? `<button type="button" class="btn" data-act="restore">Restaurar</button>`
     : `${key === 'done' ? '<button type="button" class="btn" data-act="rerun">Rodar de novo</button>' : ''}<button type="button" class="btn" data-act="archive">Arquivar</button>`;
   let content = '<p class="fine">Carregando…</p>';
   if (d){
-    const results = d.results;
-    const waiting = key === 'todo' && !results.length
-      ? `<div class="wait"><b>Aguardando o resultado.</b> No celular, mande: <code>${esc(command(card))}</code></div>` : '';
+    const results = d.results, pending = d.pending, cmd = esc(command(card));
+    const waiting = pending.length
+      ? `<section class="block pending"><h3>Pergunta aguardando resposta</h3>${askHtml(pending)}
+          <div class="row"><span class="fine">No celular, mande: <code>${cmd}</code></span><span class="spacer"></span><button type="button" class="btn" data-act="cancel-run">Cancelar pergunta</button></div></section>`
+      : key !== 'todo' ? ''
+      : results.length
+        ? `<div class="wait"><span><b>Na fila para rodar de novo.</b> No celular, mande: <code>${cmd}</code></span><button type="button" class="btn" data-act="cancel-run">Cancelar e voltar para Pronto</button></div>`
+        : `<div class="wait"><span><b>Aguardando o resultado.</b> No celular, mande: <code>${cmd}</code></span></div>`;
     const promptBlock = `<details class="block" ${results.length ? '' : 'open'}><summary>Prompt</summary><pre class="prompt">${esc(d.desc)}</pre>
       <div class="row tools"><button type="button" class="btn" data-act="copy-prompt">Copiar prompt</button><button type="button" class="btn" data-act="edit">Editar</button></div></details>`;
-    content = waiting + promptBlock + results.map((r, i) => resultHtml(r, i, card)).join('');
+    const list = results.map((r, i) => resultHtml(r, i, card));
+    if (results.length && key !== 'arch') list.splice(1, 0, askBox(card));
+    content = waiting + promptBlock + list.join('');
   }
   pane.innerHTML = `<div class="card">
     <button type="button" class="btn ghost back" data-act="back">‹ Voltar</button>
@@ -375,6 +400,7 @@ function renderDetail(){
   pane.dataset.loaded = d ? '1' : '';
   [...pane.querySelectorAll('details')].forEach((x, i) => { if (openOld[i] !== undefined) x.open = openOld[i]; });
   pane.scrollTop = scroll;
+  if (typing && $('#askText')){ const t = $('#askText'); t.focus(); t.setSelectionRange(typing[0], typing[1]); }
 }
 function renderComposer(card){
   const editing = !!card;
@@ -436,7 +462,7 @@ async function loadDetail(card){
     api('GET', `/cards/${card.id}`, {fields: 'desc'}),
     comments(card) ? api('GET', `/cards/${card.id}/actions`, {filter: 'commentCard', limit: '1000'}) : Promise.resolve([])
   ]);
-  st.det[card.id] = {stamp: stamp(card), desc: c.desc || '', results: groupResults(acts)};
+  st.det[card.id] = Object.assign({stamp: stamp(card), desc: c.desc || ''}, parseThread(acts));
 }
 async function syncDetail(){
   if (st.mode !== 'view' || !st.sel) return;
@@ -522,6 +548,33 @@ async function moveTo(card, key, msg){
   });
 }
 
+async function saveAsk(card){
+  const box = $('#askText');
+  const text = box ? box.value.trim() : '';
+  if (!text){ toast('Escreva a pergunta antes de salvar.', true); return; }
+  if (text.length + 11 > LIMIT){ toast(`A pergunta passa do limite de ${LIMIT.toLocaleString('pt-BR')} caracteres.`, true); return; }
+  await run(async () => {
+    await api('POST', `/cards/${card.id}/actions/comments`, {text: `[pergunta]\n${text}`});
+    await api('PUT', `/cards/${card.id}`, {idList: st.lists.todo.id, pos: 'top'});
+    delete st.askDraft[card.id];
+    delete st.det[card.id];
+    await refresh();
+    await openCard(card.id, `Pergunta salva. No celular, mande: ${command(card)}`);
+  });
+}
+async function cancelRun(card){
+  await run(async () => {
+    const pending = (st.det[card.id] && st.det[card.id].pending) || [];
+    for (const q of pending) await api('DELETE', `/cards/${card.id}/actions/${q.id}/comments`);
+    if (pending.length) st.askDraft[card.id] = pending.map(q => q.text).join('\n\n');
+    await api('PUT', `/cards/${card.id}`, {idList: st.lists.done.id, pos: 'top'});
+    delete st.det[card.id];
+    await refresh();
+    await openCard(card.id);
+    toast('Cancelado. O cartão voltou para Pronto.');
+  });
+}
+
 /* ---------- eventos ---------- */
 function startNew(){
   st.mode = 'new';
@@ -579,6 +632,8 @@ const actions = {
   },
   download(el){ const r = resultAt(el); if (r && r.res) download(r.card, r.res.text); },
   rerun(){ const c = findCard(st.sel); if (c) moveTo(c, 'todo', 'Prompt voltou para A rodar.'); },
+  'cancel-run'(){ const c = findCard(st.sel); if (c) cancelRun(c); },
+  ask(){ const c = findCard(st.sel); if (c) saveAsk(c); },
   archive(){ const c = findCard(st.sel); if (c) moveTo(c, 'arch', 'Prompt arquivado.'); },
   restore(){ const c = findCard(st.sel); if (c) moveTo(c, comments(c) ? 'done' : 'todo', 'Prompt restaurado.'); }
 };
@@ -591,11 +646,17 @@ document.addEventListener('click', e => {
   if (fn) fn(el);
 });
 document.addEventListener('input', e => {
+  if (e.target.id === 'askText'){ if (st.sel) st.askDraft[st.sel] = e.target.value; return; }
   if (e.target.id !== 'pText' && e.target.id !== 'pTitle') return;
   count();
   if (st.mode === 'new') save(DRAFT_KEY, {title: $('#pTitle').value, text: $('#pText').value});
 });
 document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.id === 'askText'){
+    e.preventDefault();
+    actions.ask();
+    return;
+  }
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && $('#pText')){
     e.preventDefault();
     (st.mode === 'edit' ? actions['save-edit'] : saveNew)();
