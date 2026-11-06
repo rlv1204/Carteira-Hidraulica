@@ -939,7 +939,7 @@ function renderNewTask(){
 }
 
 /* ---------- tela de conexão ---------- */
-function tokenUrl(k){ return `https://trello.com/1/authorize?expiration=30days&scope=read,write&response_type=token&name=${encodeURIComponent('Painel Carteira Hidráulica')}&key=${encodeURIComponent(k)}`; }
+function tokenUrl(k){ return `https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=${encodeURIComponent('Painel Carteira Hidráulica')}&key=${encodeURIComponent(k)}`; }
 function renderSetup(msg){
   const c = conn || {};
   $('#main').innerHTML = `<div class="scroll"><div class="setup">
@@ -959,7 +959,7 @@ function renderSetup(msg){
         <li>Com a chave colada acima, clique em <b>Gerar token</b>. Abre uma página do Trello.</li>
         <li>Clique em <b>Permitir</b>, copie o token que aparece e cole abaixo.</li>
       </ol>
-      <div class="row"><button type="button" class="btn" id="btnToken">${ICON.ext}Gerar token</button><span class="fine">Pede leitura e escrita, com validade de 30 dias. Quando vencer, a página volta para esta tela: gere um token novo, a chave continua a mesma. Dá para revogar antes no Trello, em Configurações → Aplicativos.</span></div>
+      <div class="row"><button type="button" class="btn" id="btnToken">${ICON.ext}Gerar token</button><span class="fine">Pede leitura e escrita, sem expirar. Dá para revogar no Trello em Configurações → Aplicativos.</span></div>
       <label for="inToken">Token</label>
       <input id="inToken" value="" placeholder="${c.token ? 'Token atual guardado — cole um novo para trocar' : 'ATTA…'}" autocomplete="off" spellcheck="false" type="password">
       <details class="adv"><summary>Avançado</summary>
@@ -1047,7 +1047,7 @@ function render(opts = {}){
 
 /* ---------- API do Trello ---------- */
 function errText(status, tx){
-  if (status === 401) return /permission|scope|write/i.test(tx) ? 'o token não tem permissão de escrita' : 'token vencido, inválido ou revogado';
+  if (status === 401) return /permission|scope|write/i.test(tx) ? 'o token não tem permissão de escrita' : 'token inválido ou revogado';
   if (status === 404) return 'não encontrado (o cartão pode ter sido arquivado)';
   if (status === 429) return 'muitas operações seguidas; tente em alguns segundos';
   if (status === 400) return (tx || 'requisição inválida').slice(0, 120);
