@@ -83,38 +83,26 @@ const st = {
 };
 
 /* ---------- Trello ---------- */
-/* Chave e token vão no cabeçalho Authorization, fora do endereço.
-   Se o navegador ou o Trello recusarem o cabeçalho, a página volta a usar o endereço. */
-let auth = 'test';   // test: sem resposta ainda; header: funcionou; url: cabeçalho recusado
-const AUTH_NOTE = {header: 'Conexão: token protegido no cabeçalho', url: 'Conexão: token no endereço, o Trello não aceitou o cabeçalho'};
-function send(method, path, params, header){
-  const qs = new URLSearchParams(header ? {} : {key: st.conn.key, token: st.conn.token});
-  const opts = {method, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer'};
-  if (header) opts.headers = {Authorization: `OAuth oauth_consumer_key="${st.conn.key}", oauth_token="${st.conn.token}"`};
+/* Chave e token vão sempre no cabeçalho Authorization, nunca no endereço. */
+const auth = 'header';
+const AUTH_NOTE = {header: 'Conexão: token protegido no cabeçalho'};
+function send(method, path, params){
+  const qs = new URLSearchParams();
+  const opts = {method, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer',
+    headers: {Authorization: `OAuth oauth_consumer_key="${st.conn.key}", oauth_token="${st.conn.token}"`}};
   if (method === 'GET') Object.entries(params).forEach(([k, v]) => qs.set(k, v));
   else opts.body = new URLSearchParams(params);
   const q = qs.toString();
   return fetch(`${API}${path}${q ? `?${q}` : ''}`, opts);
 }
 async function request(method, path, params){
-  let r = null;
-  if (auth !== 'url'){
-    try { r = await send(method, path, params, true); }
-    catch(e){ if (auth === 'header') throw new Error('sem conexão com api.trello.com'); }
-    if (r && r.ok) auth = 'header';
-    else if (r && r.status === 401 && auth === 'test') r = null;
-  }
-  if (!r){
-    try { r = await send(method, path, params, false); }
-    catch(e){ throw new Error('sem conexão com api.trello.com'); }
-    if (r.ok) auth = 'url';
-  }
-  return r;
+  try { return await send(method, path, params); }
+  catch(e){ throw new Error('sem conexão com api.trello.com'); }
 }
 async function api(method, path, params = {}){
   const r = await request(method, path, params);
   if (!r.ok){
-    const e = new Error(r.status === 401 ? 'token recusado pelo Trello' : r.status === 429 ? 'limite de requisições do Trello' : `erro ${r.status} do Trello`);
+    const e = new Error(r.status === 401 ? 'token vencido ou recusado pelo Trello' : r.status === 429 ? 'limite de requisições do Trello' : `erro ${r.status} do Trello`);
     e.status = r.status;
     throw e;
   }
@@ -226,12 +214,15 @@ function todayMark(){
 function inline(src){
   return src.split(/(`[^`\n]+`)/g).map(p => {
     if (/^`[^`\n]+`$/.test(p)) return `<code>${esc(p.slice(1, -1))}</code>`;
-    let t = esc(p);
-    t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, txt, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${txt}</a>`);
-    t = t.replace(/(^|[\s(])(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, (m, pre, url) => `${pre}<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    /* A marca do link só vira HTML no fim, para o endereço não ser reprocessado dentro do atributo. */
+    const tags = [];
+    const open = url => { tags.push(`<a href="${url}" target="_blank" rel="noopener noreferrer">`); return `\u0000${tags.length - 1}\u0000`; };
+    let t = esc(p).replace(/\u0000/g, '');
+    t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, txt, url) => `${open(url)}${txt}</a>`);
+    t = t.replace(/(^|[\s(])(https?:\/\/[^\s<\u0000]+[^\s<.,;:!?)\u0000])/g, (m, pre, url) => `${pre}${open(url)}${url}</a>`);
     t = t.replace(/\*\*(?=\S)(.+?)\*\*/g, '<strong>$1</strong>');
     t = t.replace(/(^|[^*\w])\*(?=[^\s*])([^*\n]+?)\*(?![*\w])/g, '$1<em>$2</em>');
-    return t;
+    return t.replace(/\u0000(\d+)\u0000/g, (m, i) => tags[Number(i)]);
   }).join('');
 }
 function splitRow(line){
@@ -389,7 +380,7 @@ async function copyRich(md, el){
 function download(card, md){
   const p = parseName(card.name);
   const base = `${p.code || 'prompt'}-${p.title}`.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').slice(0, 60);
-  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(card.name)}</title></head><body>${exportHtml(md)}</body></html>`;
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:"><title>${esc(card.name)}</title></head><body>${exportHtml(md)}</body></html>`;
   const url = URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'}));
   const a = document.createElement('a');
   a.href = url;

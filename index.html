@@ -930,7 +930,7 @@ function renderNewTask(){
       <datalist id="waitList2">${waitNames().map(n => `<option value="${esc(n)}">`).join('')}</datalist>
       <div><div class="sec-label">Plataforma <span class="fine">· marcada pelo título quando tiver P-58, P-57 ou MOP-1</span></div>
         <div class="acts" style="margin-top:6px">${PLATS.map(p => `<button type="button" class="tg ${p.cls}" data-ntplat="${p.id}" aria-pressed="${(nt.plats || []).includes(p.id)}">${p.id}</button>`).join('')}</div></div>
-      <div class="fld"><span>Referências <span class="fine">· separe por " · " ou vírgula (ex.: Nota 17130615, RC 36742082)</span></span><input class="inp" id="ntRefs" autocomplete="off" placeholder="—"></div>
+      <div class="fld"><span>Referências <span class="fine">· separe por " · " ou vírgula (ex.: Nota 12345678, RC 1234567)</span></span><input class="inp" id="ntRefs" autocomplete="off" placeholder="—"></div>
       <div class="fld"><span>Primeiro registro do histórico</span><input class="inp" id="ntFirst" autocomplete="off" placeholder="Ex.: Solicitada cotação à Framo"></div>
       <div class="row"><button type="button" class="btn primary" data-act="create">Criar tarefa</button><button type="button" class="btn ghost" data-close>Cancelar</button></div>
     </div>
@@ -939,7 +939,7 @@ function renderNewTask(){
 }
 
 /* ---------- tela de conexão ---------- */
-function tokenUrl(k){ return `https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=${encodeURIComponent('Painel Carteira Hidráulica')}&key=${encodeURIComponent(k)}`; }
+function tokenUrl(k){ return `https://trello.com/1/authorize?expiration=30days&scope=read,write&response_type=token&name=${encodeURIComponent('Painel Carteira Hidráulica')}&key=${encodeURIComponent(k)}`; }
 function renderSetup(msg){
   const c = conn || {};
   $('#main').innerHTML = `<div class="scroll"><div class="setup">
@@ -959,7 +959,7 @@ function renderSetup(msg){
         <li>Com a chave colada acima, clique em <b>Gerar token</b>. Abre uma página do Trello.</li>
         <li>Clique em <b>Permitir</b>, copie o token que aparece e cole abaixo.</li>
       </ol>
-      <div class="row"><button type="button" class="btn" id="btnToken">${ICON.ext}Gerar token</button><span class="fine">Pede leitura e escrita, sem expirar. Dá para revogar no Trello em Configurações → Aplicativos.</span></div>
+      <div class="row"><button type="button" class="btn" id="btnToken">${ICON.ext}Gerar token</button><span class="fine">Pede leitura e escrita, com validade de 30 dias. Quando vencer, a página volta para esta tela: gere um token novo, a chave continua a mesma. Dá para revogar antes no Trello, em Configurações → Aplicativos.</span></div>
       <label for="inToken">Token</label>
       <input id="inToken" value="" placeholder="${c.token ? 'Token atual guardado — cole um novo para trocar' : 'ATTA…'}" autocomplete="off" spellcheck="false" type="password">
       <details class="adv"><summary>Avançado</summary>
@@ -1047,39 +1047,27 @@ function render(opts = {}){
 
 /* ---------- API do Trello ---------- */
 function errText(status, tx){
-  if (status === 401) return /permission|scope|write/i.test(tx) ? 'o token não tem permissão de escrita' : 'token inválido ou revogado';
+  if (status === 401) return /permission|scope|write/i.test(tx) ? 'o token não tem permissão de escrita' : 'token vencido, inválido ou revogado';
   if (status === 404) return 'não encontrado (o cartão pode ter sido arquivado)';
   if (status === 429) return 'muitas operações seguidas; tente em alguns segundos';
   if (status === 400) return (tx || 'requisição inválida').slice(0, 120);
   return `Trello respondeu ${status}`;
 }
-/* Chave e token vão no cabeçalho Authorization, fora do endereço.
-   Se o navegador ou o Trello recusarem o cabeçalho, a página volta a usar o endereço. */
-let auth = 'test';   // test: sem resposta ainda; header: funcionou; url: cabeçalho recusado
-const AUTH_NOTE = {header: 'Conexão: token protegido no cabeçalho', url: 'Conexão: token no endereço, o Trello não aceitou o cabeçalho'};
-function send(method, path, params, header){
-  const qs = new URLSearchParams(header ? {} : {key: conn.key, token: conn.token});
-  const opts = {method, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer'};
-  if (header) opts.headers = {Authorization: `OAuth oauth_consumer_key="${conn.key}", oauth_token="${conn.token}"`};
+/* Chave e token vão sempre no cabeçalho Authorization, nunca no endereço. */
+const auth = 'header';
+const AUTH_NOTE = {header: 'Conexão: token protegido no cabeçalho'};
+function send(method, path, params){
+  const qs = new URLSearchParams();
+  const opts = {method, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer',
+    headers: {Authorization: `OAuth oauth_consumer_key="${conn.key}", oauth_token="${conn.token}"`}};
   if (method === 'GET' || method === 'DELETE') Object.entries(params).forEach(([k, v]) => qs.set(k, v));
   else opts.body = new URLSearchParams(params);
   const q = qs.toString();
   return fetch(`${API}${path}${q ? `?${q}` : ''}`, opts);
 }
 async function request(method, path, params){
-  let r = null;
-  if (auth !== 'url'){
-    try { r = await send(method, path, params, true); }
-    catch(e){ if (auth === 'header') throw new Error('sem conexão com api.trello.com'); }
-    if (r && r.ok) auth = 'header';
-    else if (r && r.status === 401 && auth === 'test') r = null;
-  }
-  if (!r){
-    try { r = await send(method, path, params, false); }
-    catch(e){ throw new Error('sem conexão com api.trello.com'); }
-    if (r.ok) auth = 'url';
-  }
-  return r;
+  try { return await send(method, path, params); }
+  catch(e){ throw new Error('sem conexão com api.trello.com'); }
 }
 async function api(method, path, params = {}){
   const r = await request(method, path, params);
@@ -1109,19 +1097,11 @@ async function write(okMsg, fn, opts = {}){
     return false;
   }
 }
-/* Esta consulta leva o token no caminho do endereço, por isso roda uma vez só por token. */
+/* O Trello só informa a permissão em um endereço que carrega o próprio token, por isso o painel não consulta.
+   Se o token não puder gravar, o Trello recusa e o painel avisa. Também apaga o trecho do token guardado antes. */
 async function checkPerm(){
-  const tail = conn.token.slice(-8);
-  const saved = load(PERM_STORE, null);
-  if (saved && saved.tail === tail){ perm = {checked: true, write: saved.write}; return; }
-  try {
-    const tk = await api('GET', `/tokens/${encodeURIComponent(conn.token)}`, {fields: 'permissions'});
-    const ps = Array.isArray(tk.permissions) ? tk.permissions : [];
-    perm = {checked: true, write: ps.some(p => p.modelType === 'Board' && p.write)};
-    save(PERM_STORE, {tail, write: perm.write});
-  } catch(e){
-    perm = {checked: true, write: e.status !== 401};   // na dúvida, deixa editar: se não puder, o Trello recusa e o painel avisa
-  }
+  try { localStorage.removeItem(PERM_STORE); } catch(e){}
+  perm = {checked: true, write: true};
 }
 async function refresh(manual){
   if (!conn) return;

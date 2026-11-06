@@ -3,7 +3,7 @@
 Página estática (um único `index.html`) para acompanhar e editar o quadro **Carteira Hidráulica** do Trello: quadro por etapa, resumo, grade e lembretes.
 
 - **Sem dados neste repositório.** A página fala direto com a API oficial do Trello (`api.trello.com`) no navegador de quem abre, com chave e token guardados só naquele navegador (localStorage). Não há servidor nem scripts ou fontes externas.
-- **Token:** a página envia chave e token no cabeçalho `Authorization`, fora do endereço. Se o navegador ou o Trello recusarem o cabeçalho, ela volta a usar o endereço. Passe o mouse sobre o texto de sincronização para ver qual dos dois está em uso.
+- **Token:** a página envia chave e token sempre no cabeçalho `Authorization`, nunca no endereço. O token vale 30 dias. Quando vencer, a página volta para a tela de conexão: gere um novo, a chave continua a mesma.
 - **Edição:** criar tarefa, registrar andamento, mover de etapa (arrastando o cartão ou pelo painel da tarefa), lembrete, aguardando, prioridade, plataforma, em andamento, referências, checklist, concluir e arquivar. Antes de gravar a descrição, a página relê o cartão para não apagar mudanças feitas em outro lugar.
 - A descrição do cartão segue o formato da carteira: `**Aguardando:**`, `**Refs:**`, `**Prioridade:**`, `**Criada em:**` e o histórico abaixo de `**Histórico**`, com a linha mais recente no topo (`dd/mm - texto`).
 - Atualiza sozinha a cada 5 minutos com a aba aberta, ao voltar para a aba, ou pelo botão **Atualizar** (atalho `R`). Atalhos: `/` busca, `N` nova tarefa.
