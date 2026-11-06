@@ -102,7 +102,7 @@ async function request(method, path, params){
 async function api(method, path, params = {}){
   const r = await request(method, path, params);
   if (!r.ok){
-    const e = new Error(r.status === 401 ? 'token vencido ou recusado pelo Trello' : r.status === 429 ? 'limite de requisições do Trello' : `erro ${r.status} do Trello`);
+    const e = new Error(r.status === 401 ? 'token recusado pelo Trello' : r.status === 429 ? 'limite de requisições do Trello' : `erro ${r.status} do Trello`);
     e.status = r.status;
     throw e;
   }
