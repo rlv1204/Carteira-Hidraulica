@@ -13,10 +13,13 @@ const SEEN_KEY = 'ch.prompts.seen';
 const DRAFT_KEY = 'ch.prompts.draft';
 const TASK_KEY = 'ch.prompts.task';
 const CARTEIRA = '7dtAJCuF';
-const LIST_NAMES = {todo: 'A rodar', done: 'Pronto', arch: 'Arquivo'};
+const LIST_NAMES = {todo: 'A rodar', run: 'Rodando', done: 'Pronto', err: 'Erro', arch: 'Arquivo'};
 const POLL_MS = 30000;
+const POLL_RUN_MS = 10000;
 const POLL_HIDDEN_MS = 120000;
 const STALL_MS = 10 * 60000;
+const START_MS = 5 * 60000;   // sem sinal da sessão depois disso, avisa que o disparo pode ter falhado
+const RUN_MS = 30 * 60000;    // sem nada novo depois disso, avisa que a sessão pode ter parado
 const LIMIT = 16384;
 const CARD_FIELDS = 'name,idList,closed,dateLastActivity,badges,pos';
 /* Modelos do Novo prompt: só os campos a preencher. O formato de cada entrega vem das preferências e skills. */
@@ -138,8 +141,21 @@ function runHint(card){
 }
 function listKey(card){ return Object.keys(st.lists).find(k => st.lists[k].id === card.idList) || 'todo'; }
 function comments(card){ return (card.badges && card.badges.comments) || 0; }
-function isUnread(card){ return comments(card) > (st.seen[card.id] || 0); }
+function isUnread(card){ return listKey(card) !== 'run' && comments(card) > (st.seen[card.id] || 0); }
 function stalled(r){ return r.got < r.total && Date.now() - new Date(r.date).getTime() > STALL_MS; }
+/* Rodando: a sessão grava [exec] inicio ao começar. Sem sinal, o disparo pode ter falhado; sem novidade, a sessão pode ter parado. */
+function runState(card, d){
+  if (listKey(card) !== 'run' || !d) return '';
+  const age = Date.now() - new Date(card.dateLastActivity).getTime();
+  const signals = [...d.execs, ...d.results].map(x => new Date(x.date).getTime());
+  const started = signals.length && new Date(card.dateLastActivity).getTime() - Math.max(...signals) < 10000;
+  if (!started) return age > START_MS ? 'nostart' : '';
+  return age > RUN_MS ? 'late' : '';
+}
+function execError(d){
+  const m = /^\s*\[exec\]\s*erro\s*:?\s*(.*)$/is.exec((d.execs[d.execs.length - 1] || {}).text || '');
+  return m ? m[1].trim() : '';
+}
 function stamp(card){ return `${card.dateLastActivity}|${comments(card)}|${card.idList}`; }
 function findCard(id){ return st.cards.find(c => c.id === id && !c.closed) || null; }
 function fmtWhen(iso){
@@ -148,16 +164,17 @@ function fmtWhen(iso){
   return d.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}).replace(',', '');
 }
 
-/* Comentário que começa com [pergunta] é do Roney. Os demais são resultado.
-   Resultado longo chega em comentários que começam com [parte 1/3]. */
+/* Comentário que começa com [pergunta] é do Roney. O que começa com [exec] é sinal da rodada automática.
+   Os demais são resultado. Resultado longo chega em comentários que começam com [parte 1/3]. */
 function parseThread(actions){
   const items = (actions || [])
     .map(a => ({id: a.id, date: a.date, text: (a.data && a.data.text) || ''}))
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  const results = [];
+  const results = [], execs = [];
   let cur = null, open = [];
   const add = r => { r.asks = open; open = []; results.push(r); };
   items.forEach(it => {
+    if (/^\s*\[exec\]/i.test(it.text)){ execs.push(it); return; }
     const q = /^\s*\[pergunta\]\s*\r?\n?/i.exec(it.text);
     if (q){ open.push({id: it.id, date: it.date, text: it.text.slice(q[0].length).trim()}); return; }
     const m = /^\s*\[parte\s+(\d+)\s*\/\s*(\d+)\]\s*\r?\n?/i.exec(it.text);
@@ -172,7 +189,7 @@ function parseThread(actions){
     cur.got = Object.keys(cur.parts).length;
     cur.text = Object.keys(cur.parts).map(Number).sort((a, b) => a - b).map(n => cur.parts[n]).join('\n');
   });
-  return {results: results.reverse(), pending: open};
+  return {results: results.reverse(), pending: open, execs};
 }
 
 /* ---------- histórico da Carteira: mesmo formato que a página da Carteira grava ---------- */
@@ -400,7 +417,7 @@ function setSync(cls, txt){
 }
 
 /* ---------- tela ---------- */
-const GROUPS = [['todo', 'A rodar'], ['done', 'Pronto']];
+const GROUPS = [['run', 'Rodando'], ['todo', 'A rodar'], ['done', 'Pronto'], ['err', 'Erro']];
 function matches(c){
   if (!st.q) return true;
   const q = st.q.toLowerCase();
@@ -419,6 +436,7 @@ function renderList(){
   const of = k => open.filter(c => listKey(c) === k);
   let html = GROUPS.map(([k, label]) => {
     const list = of(k);
+    if (!list.length && (k === 'run' || k === 'err')) return '';
     return `<h2 class="group">${label} <span class="count num">${list.length}</span></h2>${list.length ? list.map(itemHtml).join('') : `<p class="fine pad">${k === 'todo' ? 'Nenhum prompt aguardando.' : 'Nenhum resultado ainda.'}</p>`}`;
   }).join('');
   const arch = of('arch');
@@ -434,10 +452,10 @@ function updateTitle(){
 function renderEmpty(){
   $('#pane').dataset.card = '';
   $('#pane').innerHTML = `<div class="empty">
-    <h2>Escreva o prompt aqui e rode no celular</h2>
+    <h2>Escreva o prompt aqui e escolha como rodar</h2>
     <ol>
       <li>Clique em <b>Novo prompt</b>, escreva e salve. Ele recebe um número, como P012.</li>
-      <li>No iPhone, toque no ícone <b>Rodar prompt</b> e envie. O Claude roda o primeiro prompt da fila.</li>
+      <li>Abra o prompt e clique em <b>Rodar Claude</b>, que roda sem celular, ou em <b>Rodar IOS</b>, que espera o ícone <b>Rodar prompt</b> do iPhone.</li>
       <li>O resultado aparece aqui, com o botão para copiar para Word ou Outlook.</li>
     </ol>
     <button type="button" class="btn primary" data-act="new">Novo prompt</button>
@@ -491,6 +509,19 @@ function regHtml(){
       <button type="button" class="btn primary" data-act="reg-save">Gravar na tarefa</button></div>
   </div>`;
 }
+function runButtons(){
+  return `<span class="row run-opts">
+    <button type="button" class="btn" data-act="run-ios" title="Deixa no topo de A rodar para rodar pelo iPhone">Rodar IOS</button>
+    <button type="button" class="btn primary" data-act="run-claude" title="Roda na nuvem do Claude, sem celular">Rodar Claude</button></span>`;
+}
+function runBlock(card, d){
+  const state = runState(card, d);
+  if (!state) return `<div class="wait"><span><b>Rodando no Claude.</b> O resultado aparece aqui sozinho.</span></div>`;
+  const text = state === 'nostart'
+    ? 'A sessão não confirmou o início. Confira a regra do Trello e a cota do Claude, ou rode pelo iPhone.'
+    : `Nada novo há mais de ${RUN_MS / 60000} minutos. A sessão pode ter parado.`;
+  return `<div class="wait warned"><span><b>Sem resposta.</b> ${text}</span><button type="button" class="btn" data-act="run-back">Voltar para A rodar</button></div>`;
+}
 function askHtml(list){
   return list.map(a => `<div class="ask-q"><span class="fine num">Sua pergunta · ${esc(fmtWhen(a.date))}</span><pre class="prompt">${esc(a.text)}</pre></div>`).join('');
 }
@@ -515,22 +546,27 @@ function renderDetail(){
   const typing = same && act && ['askText', 'regQ', 'regText'].includes(act.id) ? [act.id, act.selectionStart, act.selectionEnd] : null;
   const moves = key === 'arch'
     ? `<button type="button" class="btn" data-act="restore">Restaurar</button>`
+    : key === 'run' ? ''
     : `${key === 'done' ? '<button type="button" class="btn" data-act="rerun">Rodar de novo</button>' : ''}<button type="button" class="btn" data-act="archive">Arquivar</button>`;
   let content = '<p class="fine">Carregando…</p>';
   if (d){
     const results = d.results, pending = d.pending, hint = runHint(card);
     const partial = results.length && results[0].got < results[0].total;
-    const waiting = pending.length
+    const running = key === 'run' ? runBlock(card, d) : '';
+    const failed = key === 'err'
+      ? `<div class="wait warned"><span><b>A rodada não terminou.</b> ${esc(execError(d) || 'Sem motivo registrado.')}</span>${runButtons()}</div>`
+      : '';
+    const waiting = running || failed || (pending.length
       ? `<section class="block pending"><h3>Pergunta aguardando resposta</h3>${askHtml(pending)}
-          <div class="row"><span class="fine">${hint}</span><span class="spacer"></span><button type="button" class="btn" data-act="cancel-run">Cancelar pergunta</button></div></section>`
+          <div class="row"><span class="fine">${hint}</span><span class="spacer"></span>${runButtons()}<button type="button" class="btn" data-act="cancel-run">Cancelar pergunta</button></div></section>`
       : key !== 'todo' || partial ? ''
       : results.length
-        ? `<div class="wait"><span><b>Na fila para rodar de novo.</b> ${hint}</span><button type="button" class="btn" data-act="cancel-run">Cancelar e voltar para Pronto</button></div>`
-        : `<div class="wait"><span><b>Aguardando o resultado.</b> ${hint}</span></div>`;
+        ? `<div class="wait"><span><b>Na fila para rodar de novo.</b> ${hint}</span><span class="row">${runButtons()}<button type="button" class="btn" data-act="cancel-run">Cancelar e voltar para Pronto</button></span></div>`
+        : `<div class="wait"><span><b>Escolha como rodar.</b> ${hint}</span>${runButtons()}</div>`);
     const promptBlock = `<details class="block" ${results.length ? '' : 'open'}><summary>Prompt</summary><pre class="prompt">${esc(d.desc)}</pre>
-      <div class="row tools"><button type="button" class="btn" data-act="copy-prompt">Copiar prompt</button><button type="button" class="btn" data-act="edit">Editar</button></div></details>`;
+      <div class="row tools"><button type="button" class="btn" data-act="copy-prompt">Copiar prompt</button>${key === 'run' ? '' : '<button type="button" class="btn" data-act="edit">Editar</button>'}</div></details>`;
     const list = results.map((r, i) => resultHtml(r, i, card));
-    if (results.length && key !== 'arch') list.splice(1, 0, askBox(card));
+    if (results.length && key !== 'arch' && key !== 'run') list.splice(1, 0, askBox(card));
     content = waiting + promptBlock + list.join('');
   }
   pane.innerHTML = `<div class="card">
@@ -620,8 +656,9 @@ async function readBoard(){
 /* Sem resposta nova o cartão não é redesenhado: isto troca o aviso quando a sessão para. */
 function checkStall(){
   const card = st.mode === 'view' && st.sel ? findCard(st.sel) : null;
-  const r = card && st.det[card.id] && st.det[card.id].results[0];
-  const now = r && stalled(r) ? `${card.id}|${r.date}` : '';
+  const d = card && st.det[card.id], r = d && d.results[0];
+  const flag = `${r && stalled(r) ? r.date : ''}|${d ? runState(card, d) : ''}`;
+  const now = d && flag !== '|' ? `${card.id}|${flag}` : '';
   if (now === st.stall) return;
   st.stall = now;
   if (now) renderDetail();
@@ -694,7 +731,7 @@ async function saveNew(){
     drop(DRAFT_KEY);
     st.mode = 'view';
     await refresh(true);
-    await openCard(c.id, `${code} salvo. No iPhone, toque em Rodar prompt e envie.`);
+    await openCard(c.id, `${code} salvo. Escolha Rodar Claude ou Rodar IOS.`);
   });
 }
 async function saveEdit(card){
@@ -718,6 +755,19 @@ async function moveTo(card, key, msg){
   });
 }
 
+/* Rodar Claude: só move o cartão para Rodando. A regra do Trello aciona a tarefa do Claude.
+   Relê a lista antes de mover, porque cada entrada em Rodando abre uma sessão nova. */
+async function runClaude(card){
+  await run(async () => {
+    const fresh = await api('GET', `/cards/${card.id}`, {fields: 'idList'});
+    if (fresh.idList === st.lists.run.id){ await refresh(true); toast('Este prompt já está rodando.'); return; }
+    await api('PUT', `/cards/${card.id}`, {idList: st.lists.run.id, pos: 'top'});
+    st.notice = null;
+    await refresh(true);
+    toast('Enviado ao Claude. O resultado aparece aqui.');
+  });
+}
+
 async function saveAsk(card){
   const box = $('#askText');
   const text = box ? box.value.trim() : '';
@@ -729,7 +779,7 @@ async function saveAsk(card){
     delete st.askDraft[card.id];
     delete st.det[card.id];
     await refresh(true);
-    await openCard(card.id, 'Pergunta salva. No iPhone, toque em Rodar prompt e envie.');
+    await openCard(card.id, 'Pergunta salva. Escolha Rodar Claude ou Rodar IOS.');
   });
 }
 async function cancelRun(card){
@@ -861,10 +911,13 @@ const actions = {
   'reg-close'(){ st.reg = null; renderDetail(); },
   'reg-save': saveReg,
   rerun(){ const c = findCard(st.sel); if (c) moveTo(c, 'todo', 'Prompt voltou para A rodar.'); },
+  'run-claude'(){ const c = findCard(st.sel); if (c) runClaude(c); },
+  'run-ios'(){ const c = findCard(st.sel); if (c) moveTo(c, 'todo', 'No topo de A rodar. No iPhone, toque em Rodar prompt.'); },
+  'run-back'(){ const c = findCard(st.sel); if (c) moveTo(c, 'todo', 'Prompt voltou para A rodar.'); },
   'cancel-run'(){ const c = findCard(st.sel); if (c) cancelRun(c); },
   ask(){ const c = findCard(st.sel); if (c) saveAsk(c); },
   archive(){ const c = findCard(st.sel); if (c) moveTo(c, 'arch', 'Prompt arquivado.'); },
-  restore(){ const c = findCard(st.sel); if (c) moveTo(c, comments(c) ? 'done' : 'todo', 'Prompt restaurado.'); }
+  restore(){ const c = findCard(st.sel), d = c && st.det[c.id]; if (c) moveTo(c, d ? (d.results.length ? 'done' : 'todo') : (comments(c) ? 'done' : 'todo'), 'Prompt restaurado.'); }
 };
 document.addEventListener('click', e => {
   const view = e.target.closest('a.tab[data-view]');
@@ -936,7 +989,14 @@ async function boot(){
     const c = st.cards.find(x => !x.closed && parseName(x.name).code === m[1]);
     if (c) await openCard(c.id);
   }
-  setInterval(() => { if (document.visibilityState === 'visible' || Date.now() - st.lastOk >= POLL_HIDDEN_MS) refresh(); }, POLL_MS);
+  let lastTry = Date.now();
+  setInterval(() => {
+    const busy = st.cards.some(c => !c.closed && listKey(c) === 'run');
+    const wait = document.visibilityState !== 'visible' ? POLL_HIDDEN_MS : busy ? POLL_RUN_MS : POLL_MS;
+    if (Date.now() - lastTry < wait) return;
+    lastTry = Date.now();
+    refresh();
+  }, 2000);
 }
 boot();
 })();
