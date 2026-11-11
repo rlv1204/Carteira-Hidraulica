@@ -1,0 +1,10 @@
+/* Bloco de notas: só o que a aba Prompts não tem. As cores vêm de ../prompts/style.css. */
+.pill.novo{background:var(--today-bg);color:var(--today)}
+.pill.copiada{background:var(--track);color:var(--fg-2)}
+.pill.respondida{background:var(--accent-soft);color:var(--accent-strong)}
+.tag{font-size:10.5px;font-weight:700;padding:0 6px;border-radius:9px;background:var(--track);color:var(--fg-2)}
+.tag.ok{background:var(--accent-soft);color:var(--accent-strong)}
+.composer textarea.inp{min-height:300px}
+.how{margin:0;padding:10px 12px;border:1px dashed var(--line-2);border-radius:6px;background:var(--surface-2);color:var(--fg-2);font-size:12.5px;font-weight:400}
+.how b{color:var(--fg)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border-radius:6px;background:var(--late-bg);border:1px solid var(--late-bd);color:var(--late);font-weight:600;font-size:12.5px}

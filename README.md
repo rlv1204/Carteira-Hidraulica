@@ -25,6 +25,17 @@ A pasta `prompts/` é a página de prompts, aberta pela aba **Prompts** da Carte
 - Resultado incompleto fica com os botões de copiar desligados. Se nada novo chegar em 10 minutos, a página avisa que a sessão pode ter parado.
 - Atualiza a cada 30 segundos com a aba visível, a cada 10 segundos enquanto houver cartão em **Rodando** e a cada 2 minutos com a aba escondida. A quantidade de resultados novos aparece no título da aba. Atalhos: `N` novo prompt, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
 
+## Bloco de notas
+
+A pasta `notas/` é o Bloco de notas, aberto pela aba **Bloco de notas**. Serve para levar um texto do laptop até o chat do Claude: a nota escrita aqui aparece no artefato **Carteira Hidráulica**, no app do Claude, com um botão **Copiar**.
+
+- As notas ficam no quadro **Prompts** do Trello, nas listas **Notas** (para copiar) e **Notas copiadas**. A aba Prompts ignora essas listas.
+- A nota fica na descrição do cartão, com número no título (`N023 - primeira linha`).
+- No app do Claude, **Copiar** coloca `[N023]` na primeira linha do texto e move o cartão para **Notas copiadas**. Esse código faz o Claude gravar a resposta na mesma nota, como comentário.
+- A resposta aparece aqui, com os botões de copiar para Word ou Outlook. Resposta longa chega em partes (`[parte 1/3]`), e a página junta tudo.
+- **Voltar para a fila** devolve uma nota copiada para o app do Claude. **Arquivar** tira a nota da lista (dá para restaurar no Trello).
+- Atualiza a cada 30 segundos com a aba visível e a cada 2 minutos com a aba escondida. Atalhos: `N` nova nota, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
+
 ## Primeiro acesso em cada navegador
 
 1. Em <https://trello.com/power-ups/admin>, crie um app e gere a **Chave de API** em *Autenticação do Trello*.
