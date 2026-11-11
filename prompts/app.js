@@ -630,7 +630,9 @@ async function readBoard(){
     const missing = Object.keys(LIST_NAMES).find(k => !lists[k]);
     if (missing) throw Object.assign(new Error(`lista "${LIST_NAMES[missing]}" não encontrada no quadro Prompts`), {status: 'list'});
     st.lists = lists;
-    st.cards = b.cards || [];
+    /* O quadro também guarda as listas do Bloco de notas: aqui só entram os cartões das listas desta aba. */
+    const own = new Set(Object.values(lists).map(l => l.id));
+    st.cards = (b.cards || []).filter(c => own.has(c.idList));
     st.lastOk = Date.now();
     st.failed = null;
     setSync('', `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`);
