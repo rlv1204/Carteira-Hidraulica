@@ -33,6 +33,7 @@ A pasta `notas/` é o Bloco de notas, aberto pela aba **Bloco de notas**. Serve 
 - A nota fica na descrição do cartão, com número no título (`N023 - primeira linha`).
 - No app do Claude, **Copiar** coloca `[N023]` na primeira linha do texto e move o cartão para **Notas copiadas**. Esse código faz o Claude gravar a resposta na mesma nota, como comentário.
 - A resposta aparece aqui, com os botões de copiar para Word ou Outlook. Resposta longa chega em partes (`[parte 1/3]`), e a página junta tudo.
+- **Continuar esta nota**, abaixo da resposta, guarda o texto atual em um comentário com `[nota]` na primeira linha, troca a descrição pela continuação e devolve o cartão para **Notas**, com o mesmo código. A página mostra as perguntas e respostas anteriores em **Histórico desta nota**.
 - **Voltar para a fila** devolve uma nota copiada para o app do Claude. **Arquivar** tira a nota da lista (dá para restaurar no Trello).
 - Atualiza a cada 30 segundos com a aba visível e a cada 2 minutos com a aba escondida. Atalhos: `N` nova nota, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
 
