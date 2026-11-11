@@ -33,7 +33,7 @@ function esc(s){
 const st = {
   conn: load(CONN_KEY, null),
   lists: {}, cards: [], det: {},
-  sel: null, mode: 'new', notice: null, confirm: false,
+  sel: null, mode: 'new', notice: null, confirm: false, cont: {},
   q: '', lastOk: 0, saving: false,
   seen: load(SEEN_KEY, {})
 };
@@ -85,15 +85,20 @@ function fmtWhen(iso){
 }
 
 /* Comentários são a resposta. Resposta longa chega em partes que começam com [parte 1/3].
-   Marcadores de controle ([exec], [pergunta]) não são resposta. */
+   Marcadores de controle ([exec], [pergunta]) não são resposta.
+   Ao continuar uma nota, o texto anterior vai para um comentário [nota] e a descrição recebe a continuação.
+   Por isso, as respostas que vêm antes de um [nota] pertencem ao texto guardado nele,
+   e as que vêm depois do último [nota] pertencem à descrição atual. */
 function parseThread(actions){
   const items = (actions || [])
     .map(a => ({date: a.date, text: (a.data && a.data.text) || ''}))
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  const results = [];
-  let cur = null;
+  const past = [];
+  let results = [], cur = null;
   items.forEach(it => {
     if (/^\s*\[(exec|pergunta)\]/i.test(it.text)) return;
+    const n = /^\s*\[nota\]\s*\r?\n?/i.exec(it.text);
+    if (n){ past.push({date: it.date, text: it.text.slice(n[0].length).trim(), answers: results}); results = []; cur = null; return; }
     const m = /^\s*\[parte\s+(\d+)\s*\/\s*(\d+)\]\s*\r?\n?/i.exec(it.text);
     if (!m){ results.push({date: it.date, text: it.text, total: 1, got: 1}); cur = null; return; }
     const part = Number(m[1]), total = Number(m[2]), body = it.text.slice(m[0].length);
@@ -106,7 +111,7 @@ function parseThread(actions){
     cur.got = Object.keys(cur.parts).length;
     cur.text = Object.keys(cur.parts).map(Number).sort((a, b) => a - b).map(n => cur.parts[n]).join('\n');
   });
-  return results.reverse();
+  return {past, results: results.reverse()};
 }
 
 /* ---------- Markdown: o texto é escapado antes de virar HTML ---------- */
@@ -302,7 +307,7 @@ function matches(c){
 function itemHtml(c){
   const p = parseName(c.name);
   return `<button type="button" class="item${c.id === st.sel && st.mode !== 'new' ? ' on' : ''}" data-act="open" data-id="${esc(c.id)}">
-    <span class="item-top"><b class="code num">${esc(p.code || 'N---')}</b>${isUnread(c) ? '<span class="dot">resposta</span>' : comments(c) ? '<span class="tag ok">respondida</span>' : ''}<span class="when num">${esc(fmtWhen(c.dateLastActivity))}</span></span>
+    <span class="item-top"><b class="code num">${esc(p.code || 'N---')}</b>${listKey(c) === 'todo' ? (comments(c) ? '<span class="tag">continuação</span>' : '') : isUnread(c) ? '<span class="dot">resposta</span>' : (st.det[c.id] ? st.det[c.id].results.length : comments(c)) ? '<span class="tag ok">respondida</span>' : ''}<span class="when num">${esc(fmtWhen(c.dateLastActivity))}</span></span>
     <span class="item-title">${esc(p.title)}</span></button>`;
 }
 function renderList(){
@@ -352,9 +357,7 @@ function count(){
 function resultHtml(r, i){
   const incomplete = r.got < r.total;
   const off = incomplete ? ' disabled title="Resposta incompleta"' : '';
-  const tools = `<div class="row tools">
-    <button type="button" class="btn primary" data-act="copy-rich" data-i="${i}"${off}>Copiar formatado</button>
-    <button type="button" class="btn" data-act="copy-text" data-i="${i}"${off}>Copiar texto</button></div>`;
+  const tools = toolsHtml(i, off);
   const late = incomplete && Date.now() - new Date(r.date).getTime() > STALL_MS;
   const warn = !incomplete ? '' : late
     ? `<div class="msg warn">Resposta incompleta: chegaram ${r.got} de ${r.total} partes e nada novo há mais de ${STALL_MS / 60000} minutos. Peça ao Claude, no mesmo chat, para gravar de novo.</div>`
@@ -362,6 +365,26 @@ function resultHtml(r, i){
   const body = `<div class="md" data-md="${i}">${renderMd(r.text)}</div>`;
   if (i === 0) return `<section class="block"><div class="block-h"><h3>Resposta do Claude</h3><span class="fine num">${esc(fmtWhen(r.date))}</span></div>${warn}${tools}${body}</section>`;
   return `<details class="block"><summary>Resposta anterior · <span class="num">${esc(fmtWhen(r.date))}</span></summary>${warn}${tools}${body}</details>`;
+}
+function toolsHtml(i, off){
+  return `<div class="row tools">
+    <button type="button" class="btn primary" data-act="copy-rich" data-i="${i}"${off}>Copiar formatado</button>
+    <button type="button" class="btn" data-act="copy-text" data-i="${i}"${off}>Copiar texto</button></div>`;
+}
+/* histórico: perguntas e respostas anteriores, da mais antiga para a mais recente */
+function pastHtml(d){
+  if (!d.past.length) return '';
+  let i = d.results.length;
+  const rounds = d.past.map(r => `<div class="ask-q"><span class="fine num">Você · até ${esc(fmtWhen(r.date))}</span><pre class="prompt">${esc(r.text)}</pre></div>
+    ${r.answers.map(a => { const k = i++; return `<div class="fine num">Claude · ${esc(fmtWhen(a.date))}</div>${toolsHtml(k, a.got < a.total ? ' disabled title="Resposta incompleta"' : '')}<div class="md" data-md="${k}">${renderMd(a.text)}</div>`; }).join('') || '<div class="fine">Sem resposta gravada.</div>'}`).join('<hr class="sep">');
+  return `<details class="block"><summary>Histórico desta nota · ${d.past.length} ${d.past.length === 1 ? 'pergunta anterior' : 'perguntas anteriores'}</summary>${rounds}</details>`;
+}
+function contBox(card){
+  return `<section class="block ask">
+    <label class="fld"><span>Continuar esta nota <span class="fine">volta para a fila do app do Claude com o mesmo código</span></span>
+      <textarea class="inp ask-in" id="cText" rows="3" spellcheck="true">${esc(st.cont[card.id] || '')}</textarea></label>
+    <div class="row"><span class="fine">Cole no mesmo chat da resposta, para o Claude ter o contexto.</span><span class="spacer"></span><button type="button" class="btn primary" data-act="continue" title="Ctrl+Enter">Salvar continuação</button></div>
+  </section>`;
 }
 function renderDetail(){
   if (st.mode !== 'view') return;
@@ -373,18 +396,20 @@ function renderDetail(){
   const same = pane.dataset.card === card.id && pane.dataset.loaded === '1';
   const scroll = same ? pane.scrollTop : 0;
   const openOld = same ? [...pane.querySelectorAll('details')].map(x => x.open) : [];
-  const answered = d ? d.results.length > 0 : comments(card) > 0;
+  const answered = d ? d.results.length > 0 : key === 'sent' && comments(card) > 0;
+  const act = document.activeElement;
+  const typing = same && act && act.id === 'cText' ? [act.selectionStart, act.selectionEnd] : null;
   const pill = answered ? '<span class="pill respondida">Respondida</span>' : `<span class="pill ${key === 'todo' ? 'novo' : 'copiada'}">${STATE[key]}</span>`;
   const moves = `${key === 'todo' ? '<button type="button" class="btn" data-act="edit">Editar</button>' : '<button type="button" class="btn" data-act="requeue" title="Volta para a fila do app do Claude">Voltar para a fila</button>'}
     <button type="button" class="btn" data-act="copy-note">Copiar nota</button>
     <button type="button" class="btn" data-act="archive">Arquivar</button>`;
   const hint = d && !d.results.length
     ? (key === 'todo'
-      ? '<div class="wait"><span><b>Na fila do app do Claude.</b> Abra o artefato Carteira Hidráulica, aba Bloco de notas, toque em Copiar e cole no chat.</span></div>'
+      ? '<div class="wait"><span><b>' + (d.past.length ? 'Continuação na fila do app do Claude.' : 'Na fila do app do Claude.') + '</b> Abra o artefato Carteira Hidráulica, aba Bloco de notas, toque em Copiar e cole no chat.</span></div>'
       : '<div class="wait"><span><b>Copiada no app do Claude.</b> A resposta aparece aqui quando o Claude gravar.</span></div>')
     : '';
   const content = d
-    ? `${hint}${d.results.map(resultHtml).join('')}<details class="block" ${d.results.length ? '' : 'open'}><summary>Nota</summary><pre class="prompt">${esc(d.desc)}</pre></details>`
+    ? `${hint}${d.results.map(resultHtml).slice(0, 1).join('')}${d.results.length ? contBox(card) : ''}${d.results.map(resultHtml).slice(1).join('')}<details class="block" ${d.results.length ? '' : 'open'}><summary>${d.past.length ? 'Continuação' : 'Nota'}</summary><pre class="prompt">${esc(d.desc)}</pre></details>${pastHtml(d)}`
     : '<p class="fine">Carregando…</p>';
   pane.innerHTML = `<div class="card">
     <button type="button" class="btn ghost back" data-act="list">‹ Notas</button>
@@ -400,6 +425,7 @@ function renderDetail(){
   pane.dataset.loaded = d ? '1' : '';
   [...pane.querySelectorAll('details')].forEach((x, i) => { if (openOld[i] !== undefined) x.open = openOld[i]; });
   pane.scrollTop = scroll;
+  if (typing && $('#cText')){ const t = $('#cText'); t.focus(); t.setSelectionRange(typing[0], typing[1]); }
 }
 
 /* ---------- dados ---------- */
@@ -440,7 +466,8 @@ async function loadDetail(card){
     api('GET', `/cards/${card.id}`, {fields: 'desc'}),
     comments(card) ? api('GET', `/cards/${card.id}/actions`, {filter: 'commentCard', limit: '1000'}) : Promise.resolve([])
   ]);
-  st.det[card.id] = {stamp: stamp(card), desc: c.desc || '', results: parseThread(acts)};
+  const t = parseThread(acts);
+  st.det[card.id] = {stamp: stamp(card), desc: c.desc || '', results: t.results, past: t.past, flat: [...t.results, ...t.past.flatMap(x => x.answers)]};
 }
 function markSeen(card){
   if ((st.seen[card.id] || 0) === comments(card)) return;
@@ -523,6 +550,23 @@ async function moveTo(card, key, msg){
     toast(msg);
   });
 }
+/* Continuar: guarda o texto atual em um comentário [nota], troca a descrição pela continuação
+   e devolve o cartão para a fila. O código e o título não mudam. */
+async function saveContinue(card){
+  const box = $('#cText');
+  const text = box ? box.value.trim() : '';
+  if (!text){ toast('Escreva a continuação antes de salvar.', true); return; }
+  if (text.length > LIMIT){ toast(`A continuação passa do limite de ${LIMIT.toLocaleString('pt-BR')} caracteres.`, true); return; }
+  await run(async () => {
+    const fresh = await api('GET', `/cards/${card.id}`, {fields: 'desc'});
+    await api('POST', `/cards/${card.id}/actions/comments`, {text: `[nota]\n${(fresh.desc || '').slice(0, LIMIT)}`});
+    await api('PUT', `/cards/${card.id}`, {desc: text, idList: st.lists.todo.id, pos: 'top'});
+    delete st.cont[card.id];
+    delete st.det[card.id];
+    await refresh(true);
+    await openCard(card.id, 'Continuação salva. Ela aparece no app do Claude em até 20 segundos.');
+  });
+}
 async function archive(card){
   await run(async () => {
     await api('PUT', `/cards/${card.id}`, {closed: 'true'});
@@ -548,7 +592,7 @@ function startNew(keepNotice){
 function resultAt(el){
   const card = findCard(st.sel), d = card && st.det[card.id];
   const i = Number(el.dataset.i);
-  return d ? {res: d.results[i], node: $(`.md[data-md="${i}"]`, $('#pane'))} : null;
+  return d ? {res: d.flat[i], node: $(`.md[data-md="${i}"]`, $('#pane'))} : null;
 }
 const actions = {
   'new': () => startNew(),
@@ -578,6 +622,7 @@ const actions = {
     const r = resultAt(el);
     if (r && r.node) toast(await copyPlain(r.node.innerText) ? 'Texto copiado.' : 'Não consegui copiar.');
   },
+  'continue'(){ const c = findCard(st.sel); if (c) saveContinue(c); },
   archive(){ st.confirm = true; renderDetail(); },
   'archive-no'(){ st.confirm = false; renderDetail(); },
   'archive-yes'(){ const c = findCard(st.sel); if (c) archive(c); }
@@ -591,11 +636,13 @@ document.addEventListener('click', e => {
   if (fn) fn(el);
 });
 document.addEventListener('input', e => {
+  if (e.target.id === 'cText'){ if (st.sel) st.cont[st.sel] = e.target.value; return; }
   if (e.target.id !== 'nText') return;
   count();
   if (st.mode === 'new') save(DRAFT_KEY, e.target.value);
 });
 document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.id === 'cText'){ e.preventDefault(); actions['continue'](); return; }
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && $('#nText')){
     e.preventDefault();
     (st.mode === 'edit' ? actions['save-edit'] : saveNew)();
