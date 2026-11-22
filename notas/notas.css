@@ -15,8 +15,8 @@ details.block .ask-q{margin-top:10px}
 /* ---------- painel: o Bloco de notas dentro da Carteira, à direita do quadro ---------- */
 html.painel .top{display:none}
 html.painel .layout{display:flex;flex-direction:column;overflow:auto;background:var(--bg)}
-html.painel .pane{display:block;order:0;overflow:visible;padding:12px 12px 6px}
-html.painel .side{display:block;order:1;overflow:visible;background:transparent;border:0;padding:4px 12px 24px}
+html.painel .pane{display:block;flex:none;order:0;overflow:visible;padding:12px 12px 6px}
+html.painel .side{display:block;flex:none;order:1;overflow:visible;background:transparent;border:0;padding:4px 12px 24px}
 html.painel .layout.open .side{display:block}
 html.painel .layout.detail .side{display:none}
 html.painel .layout.detail .pane{padding-bottom:28px}
