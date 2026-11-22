@@ -143,7 +143,7 @@ a.tab{text-decoration:none;display:inline-block}
 .card{background:var(--surface);border:1px solid transparent;border-radius:7.5px;box-shadow:var(--shadow);padding:11px 11px 9px;display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;width:100%}
 .card:hover{box-shadow:var(--shadow-h)}
 .card.late{background:var(--surface);background:color-mix(in srgb,var(--late) 6%,var(--surface));border-color:var(--late)}
-.card.today{background:var(--today-bg);border-color:var(--today-bd)}
+.card.today{background:var(--surface);background:color-mix(in srgb,var(--today) 6%,var(--surface));border-color:var(--today)}
 .card.urg{background:var(--urg-bg);border-color:var(--urg-bd);box-shadow:0 0 0 1px var(--urg-bd),var(--shadow)}
 .card.next{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
 .card.done .c-title{text-decoration:line-through;color:var(--fg-3)}
@@ -591,6 +591,14 @@ function labelRole(l){
   return name === 'urg' || name === 'and' ? name + '.' : name;
 }
 const isPlat = r => r !== 'urg' && r !== 'and';
+/* nome exibido da plataforma: P-58, P-57 e MOP-1 mesmo que a etiqueta no Trello se chame "P58", "57" ou "MOP" */
+function platName(id){
+  const k = String(id || '').replace(/\s/g, '').toLowerCase();
+  if (/^p?-?58$/.test(k)) return 'P-58';
+  if (/^p?-?57$/.test(k)) return 'P-57';
+  if (/^mop-?1?$/.test(k)) return 'MOP-1';
+  return id;
+}
 function autoPlats(s){
   const x = String(s || '').replace(/\s/g, '');
   return PLATS.filter(p => {
@@ -655,7 +663,8 @@ function stageSince(t){
   return t.created;
 }
 function daysSince(iso){ return iso ? Math.max(0, -diffDays(iso)) : null; }
-function lastUpdate(t){ return t.notes[0] || ''; }
+/* última anotação escrita à mão; as linhas automáticas "Movida: X → Y" só aparecem se não houver outra */
+function lastUpdate(t){ return t.notes.find(n => !MOVE_RE.test(n)) || t.notes[0] || ''; }
 function listOf(t){ return board.lists.find(l => l.id === t.listId) || {name: '—', idx: 0}; }
 const isPend = l => /pendente/i.test(l.name);
 const isRet = l => /aguardando retorno/i.test(l.name);
@@ -707,7 +716,7 @@ function byQueue(a, b){
 
 /* ---------- peças de interface ---------- */
 function platLabels(t){
-  return t.plats.map(p => `<span class="lb ${PLATS.find(x => x.id === p).cls}">${esc(p)}</span>`).join('')
+  return t.plats.map(p => `<span class="lb ${PLATS.find(x => x.id === p).cls}">${esc(platName(p))}</span>`).join('')
     + t.other.map(o => `<span class="lb other">${esc(o)}</span>`).join('');
 }
 function dueBadge(t){
@@ -767,7 +776,7 @@ function renderStrip(){
     ${chip('and', 'and', 'em andamento')}
     ${chip('none', '', 'sem lembrete')}
     <span class="sep"></span>
-    ${PLATS.map(p => `<button type="button" class="lb-toggle ${p.cls}" data-plat="${esc(p.id)}" aria-pressed="${ui.plats.has(p.id)}">${esc(p.id)}</button>`).join('')}
+    ${PLATS.map(p => `<button type="button" class="lb-toggle ${p.cls}" data-plat="${esc(p.id)}" aria-pressed="${ui.plats.has(p.id)}">${esc(platName(p.id))}</button>`).join('')}
     <button type="button" class="lb-toggle none" data-plat="__none" aria-pressed="${ui.noLabel}">Sem etiqueta</button>
     <span class="sep"></span>
     <select class="wait-sel" id="waitSel" aria-label="Filtrar por aguardando">
@@ -819,7 +828,7 @@ function renderResumo(){
     </button>`;
   }).join('');
   const byList = board.lists.map(l => { const a = open.filter(t => t.listId === l.id); return {label: `${l.idx}. ${l.name}`, total: a.length, late: lateOf(a), attr: ''}; });
-  const byPlat = PLATS.map(p => { const a = open.filter(t => t.plats.includes(p.id)); return {label: p.id, total: a.length, late: lateOf(a), attr: `data-only="${esc(p.id)}"`}; });
+  const byPlat = PLATS.map(p => { const a = open.filter(t => t.plats.includes(p.id)); return {label: platName(p.id), total: a.length, late: lateOf(a), attr: `data-only="${esc(p.id)}"`}; });
   const noLb = open.filter(t => !t.plats.length);
   if (noLb.length) byPlat.push({label: 'Sem etiqueta', total: noLb.length, late: lateOf(noLb), attr: 'data-only="__none"'});
   const wmap = new Map();
@@ -915,7 +924,7 @@ function renderDrawer(){
         <button type="button" class="tg ok" data-act="done" aria-pressed="${t.done}" ${dis}><span class="sq"></span>${t.done ? 'Concluída' : 'Concluir'}</button>
         <button type="button" class="tg and" data-act="and" aria-pressed="${t.and}" ${dis}><span class="sq"></span>Em andamento</button>
         <span class="sep" style="width:1px;height:18px;background:var(--line-2)"></span>
-        ${PLATS.map(p => `<button type="button" class="tg ${p.cls}" data-act="plat" data-role="${esc(p.id)}" aria-pressed="${t.plats.includes(p.id)}" ${dis}>${esc(p.id)}</button>`).join('')}
+        ${PLATS.map(p => `<button type="button" class="tg ${p.cls}" data-act="plat" data-role="${esc(p.id)}" aria-pressed="${t.plats.includes(p.id)}" ${dis}>${esc(platName(p.id))}</button>`).join('')}
       </div>
       ${w ? `<div class="log">
         <label class="sec-label" for="logTxt">Registrar andamento</label>
@@ -976,7 +985,7 @@ function renderNewTask(){
       </div>
       <datalist id="waitList2">${waitNames().map(n => `<option value="${esc(n)}">`).join('')}</datalist>
       <div><div class="sec-label">Plataforma <span class="fine">· marcada sozinha quando o título tiver o nome da etiqueta</span></div>
-        <div class="acts" style="margin-top:6px">${PLATS.map(p => `<button type="button" class="tg ${p.cls}" data-ntplat="${esc(p.id)}" aria-pressed="${(nt.plats || []).includes(p.id)}">${esc(p.id)}</button>`).join('')}</div></div>
+        <div class="acts" style="margin-top:6px">${PLATS.map(p => `<button type="button" class="tg ${p.cls}" data-ntplat="${esc(p.id)}" aria-pressed="${(nt.plats || []).includes(p.id)}">${esc(platName(p.id))}</button>`).join('')}</div></div>
       <div class="fld"><span>Referências <span class="fine">· separe por " · " ou vírgula (ex.: Nota 12345678, RC 1234567)</span></span><input class="inp" id="ntRefs" autocomplete="off" placeholder="—"></div>
       <div class="fld"><span>Primeiro registro do histórico</span><input class="inp" id="ntFirst" autocomplete="off" placeholder="Ex.: Solicitada cotação ao fornecedor"></div>
       <div class="row"><button type="button" class="btn primary" data-act="create">Criar tarefa</button><button type="button" class="btn ghost" data-close>Cancelar</button></div>
