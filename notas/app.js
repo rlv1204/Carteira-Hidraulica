@@ -375,7 +375,7 @@ function renderComposer(card){
     ${editing ? '' : HOW}
   </div>`;
   count();
-  $('#nText').focus();
+  if (!PAINEL || editing) $('#nText').focus();
 }
 function count(){
   const el = $('#nCount'), ta = $('#nText');

@@ -24,7 +24,8 @@ html.painel .back{display:none}
 html.painel .layout.detail .back{display:inline-flex}
 html.painel .card{gap:10px}
 html.painel .composer h2{font-size:14px}
-html.painel .composer textarea.inp{min-height:120px;max-height:40vh}
+html.painel .composer textarea.inp{min-height:110px;height:130px;max-height:50vh}
+html.painel .composer .fld > span{display:none}
 html.painel .composer .how{display:none}
 html.painel .head h2{font-size:15px}
 html.painel .md{font-size:13px}
