@@ -5,6 +5,8 @@
    para copiar e colar no chat. Descrição do cartão = nota. Comentários = resposta gravada pelo Claude.
    Usa a mesma conexão (chave e token) que a Carteira guarda neste navegador. */
 
+/* ?painel=1: a mesma página, compacta, dentro do painel à direita do quadro da Carteira */
+const PAINEL = /[?&]painel(=|&|$)/.test(location.search) && window.parent !== window;
 const API = 'https://api.trello.com/1';
 const BOARD = 'tZN5E4ad';
 const CONN_KEY = 'ch.dash.trello';
@@ -18,7 +20,7 @@ const POLL_HIDDEN_MS = 120000;
 const STALL_MS = 10 * 60000;
 const LIMIT = 16000;          // o Trello aceita 16.384; a folga cobre a linha do código na cópia
 const SENT_MAX = 40;
-const CARD_FIELDS = 'name,idList,closed,dateLastActivity,badges,pos';
+const CARD_FIELDS = 'name,idList,closed,dateLastActivity,badges,pos' + (PAINEL ? ',desc' : '');
 
 const $ = (s, r = document) => r.querySelector(s);
 const BASE_TITLE = document.title;
@@ -310,7 +312,34 @@ function itemHtml(c){
     <span class="item-top"><b class="code num">${esc(p.code || 'N---')}</b>${listKey(c) === 'todo' ? (comments(c) ? '<span class="tag">continuação</span>' : '') : isUnread(c) ? '<span class="dot">resposta</span>' : (st.det[c.id] ? st.det[c.id].results.length : comments(c)) ? '<span class="tag ok">respondida</span>' : ''}<span class="when num">${esc(fmtWhen(c.dateLastActivity))}</span></span>
     <span class="item-title">${esc(p.title)}</span></button>`;
 }
+/* painel: uma lista só, da nota mais recente para a mais antiga, com o texto, Copiar e a situação da resposta */
+function panelState(c){
+  const n = comments(c), d = st.det[c.id];
+  if (listKey(c) === 'todo') return {cls: 'novo', answered: false, pill: `<span class="pill novo">${n ? 'Continuação na fila' : 'Para copiar'}</span>`};
+  const answered = d && d.stamp === stamp(c) ? d.results.length > 0 : n > 0;
+  if (answered && isUnread(c)) return {cls: 'nova', answered, pill: '<span class="dot">Resposta nova</span>'};
+  if (answered) return {cls: '', answered, pill: '<span class="pill respondida">Respondida</span>'};
+  return {cls: '', answered, pill: '<span class="pill copiada">Aguardando resposta</span>'};
+}
+function panelItem(c){
+  const p = parseName(c.name), s = panelState(c);
+  const text = String(c.desc || p.title).trim();
+  return `<article class="pitem ${s.cls}">
+    <div class="item-top"><b class="code num">${esc(p.code || 'N---')}</b>${s.pill}<span class="when num">${esc(fmtWhen(c.dateLastActivity))}</span></div>
+    <div class="ptext" role="button" tabindex="0" data-act="open" data-id="${esc(c.id)}" title="Abrir a nota">${esc(text.slice(0, 700))}</div>
+    <div class="row"><button type="button" class="btn ${listKey(c) === 'todo' ? 'primary' : ''}" data-act="copy-item" data-id="${esc(c.id)}" title="Copia a nota com o código na primeira linha">Copiar</button>${s.answered ? `<button type="button" class="btn" data-act="open" data-id="${esc(c.id)}">Ver resposta</button>` : ''}</div>
+  </article>`;
+}
+function renderPanelList(){
+  const all = st.cards.filter(matches).sort((a, b) => String(b.dateLastActivity).localeCompare(String(a.dateLastActivity)));
+  const shown = all.slice(0, SENT_MAX);
+  $('#side').innerHTML = `<h2 class="group">Notas recentes <span class="count num">${all.length}</span></h2>${shown.length ? shown.map(panelItem).join('') : '<p class="fine pad">Nenhuma nota ainda. Escreva acima e salve.</p>'}${all.length > shown.length ? `<p class="fine pad">Mostrando as ${shown.length} mais recentes. As outras estão em Abrir.</p>` : ''}`;
+  const unread = st.cards.filter(c => listKey(c) === 'sent' && panelState(c).cls === 'nova').length;
+  const todo = st.cards.filter(c => listKey(c) === 'todo').length;
+  try { window.parent.postMessage({ch: 'notas', unread, todo}, location.origin); } catch(e){}
+}
 function renderList(){
+  if (PAINEL){ renderPanelList(); return; }
   const open = st.cards.filter(matches);
   const todo = open.filter(c => listKey(c) === 'todo').sort((a, b) => a.pos - b.pos);
   const sent = open.filter(c => listKey(c) === 'sent').sort((a, b) => String(b.dateLastActivity).localeCompare(String(a.dateLastActivity)));
@@ -332,6 +361,7 @@ function renderComposer(card){
   const d = editing ? st.det[card.id] : null;
   const text = editing ? (d ? d.desc : '') : load(DRAFT_KEY, '') || '';
   $('#layout').classList.add('open');
+  $('#layout').classList.toggle('detail', editing);
   $('#pane').dataset.card = '';
   $('#pane').innerHTML = `<div class="card composer">
     <button type="button" class="btn ghost back" data-act="list">‹ Notas</button>
@@ -391,7 +421,7 @@ function renderDetail(){
   const pane = $('#pane');
   const card = st.sel ? findCard(st.sel) : null;
   if (!card){ startNew(); return; }
-  $('#layout').classList.add('open');
+  $('#layout').classList.add('open', 'detail');
   const p = parseName(card.name), key = listKey(card), d = st.det[card.id];
   const same = pane.dataset.card === card.id && pane.dataset.loaded === '1';
   const scroll = same ? pane.scrollTop : 0;
@@ -454,6 +484,7 @@ async function readBoard(){
     st.lastOk = Date.now();
     setSync('', `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`);
     renderList();
+    if (PAINEL) await loadAnswers();
     await syncDetail();
   } catch(e){
     setSync('err', `Falhou: ${e.message}`);
@@ -468,6 +499,15 @@ async function loadDetail(card){
   ]);
   const t = parseThread(acts);
   st.det[card.id] = {stamp: stamp(card), desc: c.desc || '', results: t.results, past: t.past, flat: [...t.results, ...t.past.flatMap(x => x.answers)]};
+}
+/* painel: lê as respostas das notas copiadas mais recentes, só quando algo mudou no cartão */
+async function loadAnswers(){
+  const need = st.cards
+    .filter(c => listKey(c) === 'sent' && comments(c) && !(st.det[c.id] && st.det[c.id].stamp === stamp(c)))
+    .sort((a, b) => String(b.dateLastActivity).localeCompare(String(a.dateLastActivity)))
+    .slice(0, 12);
+  for (const c of need){ try { await loadDetail(c); } catch(e){ break; } }
+  if (need.length) renderList();
 }
 function markSeen(card){
   if ((st.seen[card.id] || 0) === comments(card)) return;
@@ -497,6 +537,7 @@ async function openCard(id, notice){
   if (code && location.hash !== `#${code}`) history.replaceState(null, '', `#${code}`);
   renderList();
   renderDetail();
+  if (PAINEL) $('#layout').scrollTop = 0;
   try {
     await loadDetail(card);
     if (st.sel !== id || st.mode !== 'view') return;
@@ -604,12 +645,19 @@ const actions = {
     try { localStorage.setItem('ch.dash.theme', root.dataset.theme); } catch(e){}
   },
   open: el => openCard(el.dataset.id),
-  list(){ st.mode = 'new'; st.sel = null; st.notice = null; $('#layout').classList.remove('open'); renderList(); renderComposer(null); $('#layout').classList.remove('open'); },
+  list(){ st.mode = 'new'; st.sel = null; st.notice = null; if (location.hash) history.replaceState(null, '', location.pathname + location.search); $('#layout').classList.remove('open', 'detail'); renderList(); renderComposer(null); $('#layout').classList.remove('open'); },
   cancel(){ if (st.sel) openCard(st.sel); else startNew(); },
   'save-new': saveNew,
   'save-edit'(){ const c = findCard(st.sel); if (c) saveEdit(c); },
   edit(){ const c = findCard(st.sel); if (c && st.det[c.id]){ st.mode = 'edit'; st.notice = null; renderComposer(c); } },
   requeue(){ const c = findCard(st.sel); if (c) moveTo(c, 'todo', 'Nota de volta na fila do app do Claude.'); },
+  async 'copy-item'(el){
+    const c = findCard(el.dataset.id);
+    if (!c) return;
+    const code = parseName(c.name).code || 'Nota';
+    const ok = await copyPlain(copyText(c, (st.det[c.id] && st.det[c.id].desc) || c.desc || ''));
+    toast(ok ? `${code} copiada com o código. Cole no chat do Claude.` : 'Não consegui copiar.', !ok);
+  },
   async 'copy-note'(){
     const c = findCard(st.sel), d = c && st.det[c.id];
     if (d) toast(await copyPlain(copyText(c, d.desc)) ? 'Nota copiada com o código.' : 'Não consegui copiar.');
@@ -642,6 +690,7 @@ document.addEventListener('input', e => {
   if (st.mode === 'new') save(DRAFT_KEY, e.target.value);
 });
 document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('ptext')){ e.preventDefault(); e.target.click(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.id === 'cText'){ e.preventDefault(); actions['continue'](); return; }
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && $('#nText')){
     e.preventDefault();
@@ -652,7 +701,7 @@ document.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if (k === 'n'){ e.preventDefault(); startNew(); }
   else if (k === 'r'){ e.preventDefault(); refresh(); }
-  else if (k === '/'){ e.preventDefault(); $('#q').focus(); }
+  else if (k === '/' && !PAINEL){ e.preventDefault(); $('#q').focus(); }
 });
 let qt;
 $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { st.q = e.target.value.trim(); renderList(); }, 120); });

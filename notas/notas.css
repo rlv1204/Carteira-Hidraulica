@@ -11,3 +11,28 @@
 .tag{white-space:nowrap}
 hr.sep{border:0;border-top:1px solid var(--line);margin:12px 0}
 details.block .ask-q{margin-top:10px}
+
+/* ---------- painel: o Bloco de notas dentro da Carteira, à direita do quadro ---------- */
+html.painel .top{display:none}
+html.painel .layout{display:flex;flex-direction:column;overflow:auto;background:var(--bg)}
+html.painel .pane{display:block;order:0;overflow:visible;padding:12px 12px 6px}
+html.painel .side{display:block;order:1;overflow:visible;background:transparent;border:0;padding:4px 12px 24px}
+html.painel .layout.open .side{display:block}
+html.painel .layout.detail .side{display:none}
+html.painel .layout.detail .pane{padding-bottom:28px}
+html.painel .back{display:none}
+html.painel .layout.detail .back{display:inline-flex}
+html.painel .card{gap:10px}
+html.painel .composer h2{font-size:14px}
+html.painel .composer textarea.inp{min-height:120px;max-height:40vh}
+html.painel .composer .how{display:none}
+html.painel .head h2{font-size:15px}
+html.painel .md{font-size:13px}
+html.painel .toast{bottom:12px}
+.pitem{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);box-shadow:var(--shadow);min-width:0}
+.pitem.novo{border-color:var(--today-bd)}
+.pitem.nova{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent),var(--shadow)}
+.pitem .ptext{border:0;background:transparent;padding:0;text-align:left;font-size:12.5px;line-height:1.42;color:var(--fg-2);white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.pitem .ptext:hover{color:var(--fg)}
+.pitem .row{gap:6px}
+.pitem .btn{padding:4px 10px;font-size:12px}

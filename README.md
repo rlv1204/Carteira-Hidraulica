@@ -37,6 +37,7 @@ A pasta `notas/` é o Bloco de notas, aberto pela aba **Bloco de notas**. Serve 
 - **Continuar esta nota**, abaixo da resposta, guarda o texto atual em um comentário com `[nota]` na primeira linha, troca a descrição pela continuação e devolve o cartão para **Notas**, com o mesmo código. A página mostra as perguntas e respostas anteriores em **Histórico desta nota**.
 - **Voltar para a fila** devolve uma nota copiada para o app do Claude. **Arquivar** tira a nota da lista (dá para restaurar no Trello).
 - Atualiza a cada 30 segundos com a aba visível e a cada 2 minutos com a aba escondida. Atalhos: `N` nova nota, `R` atualizar, `/` busca, `Ctrl+Enter` salvar.
+- **Painel de notas no Quadro:** a mesma página, compacta (`notas/?painel=1`), fica à direita do quadro, com a caixa de escrever no topo e as notas da mais recente para a mais antiga (código, data, texto, **Copiar** e a situação da resposta). Em tela larga (1800 px ou mais) fica fixo e o botão **Notas** recolhe; recolhido, as colunas ocupam a largura toda. Em tela mais estreita, o botão **Notas** abre o painel por cima do quadro.
 
 ## Primeiro acesso em cada navegador
 

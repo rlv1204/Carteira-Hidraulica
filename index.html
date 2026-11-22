@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://api.trello.com; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://api.trello.com; frame-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
 <title>Carteira Hidráulica</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2331752f'/%3E%3Ctext x='16' y='21' font-family='Segoe UI,Arial' font-size='13' font-weight='700' fill='white' text-anchor='middle'%3ECH%3C/text%3E%3C/svg%3E">
 <style>
@@ -131,7 +131,7 @@ a.tab{text-decoration:none;display:inline-block}
 /* ---------- quadro ---------- */
 .main{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
 .board{flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;display:flex;gap:24px;padding:18px 22px 22px;align-items:flex-start}
-.col{flex:0 0 min(88vw,300px);max-height:100%;display:flex;flex-direction:column;border-radius:9.5px;min-width:0;background:var(--col-bg);padding:11.5px 11.5px 4px}
+.col{flex:1 0 260px;max-height:100%;display:flex;flex-direction:column;border-radius:9.5px;min-width:0;background:var(--col-bg);padding:11.5px 11.5px 4px}
 .col-head{display:flex;align-items:center;gap:6px;padding:4px 4px 6px}
 .col-step{display:inline-grid;place-items:center;min-width:19px;height:19px;border-radius:50%;background:var(--accent-soft);color:var(--accent-strong);font-size:11px;font-weight:700;flex:none}
 .col-title{font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}
@@ -142,7 +142,7 @@ a.tab{text-decoration:none;display:inline-block}
 .col-empty{color:var(--fg-3);font-size:12px;padding:6px}
 .card{background:var(--surface);border:1px solid transparent;border-radius:7.5px;box-shadow:var(--shadow);padding:11px 11px 9px;display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;width:100%}
 .card:hover{box-shadow:var(--shadow-h)}
-.card.late{background:var(--late-bg);border-color:var(--late-bd)}
+.card.late{background:var(--surface);background:color-mix(in srgb,var(--late) 6%,var(--surface));border-color:var(--late)}
 .card.today{background:var(--today-bg);border-color:var(--today-bd)}
 .card.urg{background:var(--urg-bg);border-color:var(--urg-bd);box-shadow:0 0 0 1px var(--urg-bd),var(--shadow)}
 .card.next{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
@@ -298,7 +298,21 @@ details.adv summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--fg
 .loading{display:flex;gap:24px;padding:18px 22px}
 .skel{flex:0 0 300px;height:320px;border-radius:9.5px;background:var(--col-bg);opacity:.7}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-weight:600;font-size:12.5px;z-index:40;box-shadow:var(--shadow-h)}
-@media (max-width:640px){.search{flex:1 1 100%;order:5}.today-label{display:none}.ro-tag{display:none}}
+@media (max-width:640px){.search{flex:1 1 100%;order:5}.today-label{display:none}.ro-tag{display:none}.col{flex:0 0 88vw}}
+
+/* ---------- painel de notas (à direita do quadro) ---------- */
+.work{flex:1;min-height:0;display:flex}
+.work > .main{flex:1;min-width:0}
+.np{flex:0 0 420px;width:420px;display:flex;flex-direction:column;min-height:0;background:var(--surface);border-left:1px solid var(--line)}
+.np-head{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-bottom:1px solid var(--line)}
+.np-head h2{margin:0;font-size:14px;font-weight:700}
+.np-head .fine{font-size:11.5px;color:var(--fg-3)}
+.np-badge{font-size:10.5px;font-weight:700;padding:0 7px;border-radius:9px;background:var(--accent);color:var(--on-accent);line-height:17px}
+.np-frame{flex:1;min-height:0;border:0;width:100%;display:block;background:var(--bg)}
+.np-scrim{position:fixed;inset:0;background:var(--scrim);z-index:24}
+#btnNotas .np-badge{margin-left:2px}
+@media (max-width:1799px){.np{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);z-index:25;box-shadow:-8px 0 23px rgba(0,0,0,.18);border-left:0}}
+@media print{.np,.np-scrim{display:none!important}}
 @media print{.top .btn,.strip,.tabs{display:none}}
 
 /* ---------- edição ---------- */
@@ -381,6 +395,8 @@ button.ring.ok:hover{background:var(--accent)}
       </label>
       <button class="btn primary" id="btnNew" type="button" data-act="new" title="Nova tarefa (N)" hidden>
         <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>Nova tarefa</button>
+      <button class="btn" id="btnNotas" type="button" title="Mostrar ou recolher o painel de notas" aria-controls="np" hidden>
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.5h6l3 3v10h-9z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.5 7.5h5M5.5 10.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Notas<span class="np-badge" id="npBadge" hidden></span></button>
       <button class="btn" id="btnRefresh" type="button" title="Atualizar agora (R)">
         <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Atualizar</button>
       <a class="btn" id="btnTrello" href="https://trello.com/b/7dtAJCuF" target="_blank" rel="noopener noreferrer" title="Abrir o quadro no Trello">
@@ -404,8 +420,16 @@ button.ring.ok:hover{background:var(--accent)}
   </header>
   <div id="strip"></div>
   <div id="banner"></div>
-  <main class="main" id="main"></main>
+  <div class="work">
+    <main class="main" id="main"></main>
+    <aside class="np" id="np" aria-label="Notas" hidden>
+      <div class="np-head"><h2>Notas</h2><span class="np-badge" id="npBadge2" hidden></span><span class="fine" id="npInfo"></span><span class="spacer"></span>
+        <a class="btn ghost" href="notas/" title="Abrir o Bloco de notas em tela cheia">Abrir</a>
+        <button class="btn icon ghost" type="button" data-np="close" title="Recolher o painel" aria-label="Recolher o painel de notas"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3.5l4.5 4.5L4 12.5M8.5 3.5L13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    </aside>
+  </div>
 </div>
+<div class="np-scrim" id="npScrim" data-np="close" hidden></div>
 <div id="drawerRoot"></div>
 <div id="toastRoot" aria-live="polite"></div>
 
@@ -1057,6 +1081,7 @@ function render(opts = {}){
   if (lastErr && board && !ui.setup) ban = `<div class="banner">Não consegui atualizar agora (${esc(lastErr)}). Mostrando a última leitura. <button type="button" class="btn" data-retry>Tentar de novo</button></div>`;
   else if (board && !ui.setup && perm.checked && !perm.write) ban = `<div class="ro-banner">Seu token atual é só de leitura. Para editar pelo painel, gere um token novo com escrita (leva 1 minuto). <button type="button" class="btn" data-reauth>Gerar token com escrita</button></div>`;
   $('#banner').innerHTML = ban;
+  if (ui.setup || !conn || !board) syncNotesPanel();
   if (ui.setup || !conn){ renderStrip(); renderSetup(ui.setupMsg); ui.setupMsg = null; renderDrawer(); return; }
   if (!board){ $('#strip').innerHTML = ''; $('#main').innerHTML = `<div class="loading" aria-label="Carregando">${'<div class="skel"></div>'.repeat(4)}</div>`; return; }
   const keep = captureScroll();
@@ -1065,6 +1090,7 @@ function render(opts = {}){
   $('#main').innerHTML = v === 'resumo' ? renderResumo() : v === 'grade' ? renderGrade() : v === 'lembretes' ? renderLembretes() : renderBoard();
   restoreScroll(keep);
   if (!(opts.keepDrawer && ui.dirty)) renderDrawer();
+  syncNotesPanel();
 }
 
 /* ---------- API do Trello ---------- */
@@ -1364,6 +1390,47 @@ $('#btnTheme').addEventListener('click', () => {
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && conn && !saving && (!lastOk || Date.now() - lastOk.getTime() > 60000)) refresh(false);
+});
+
+/* ---------- painel de notas ----------
+   Mostra o Bloco de notas (notas/?painel=1) à direita do quadro. Em tela larga fica fixo e pode ser recolhido;
+   em tela estreita abre por cima do quadro pelo botão Notas. A página do painel é a mesma do Bloco de notas. */
+const NP_STORE = 'ch.dash.np';
+const NP_WIDE = window.matchMedia ? matchMedia('(min-width:1800px)') : {matches: true};
+const np = {open: load(NP_STORE, {open: true}).open !== false, sheet: false, loaded: false, unread: 0, todo: 0};
+function syncNotesPanel(){
+  const can = !!(conn && board && !ui.setup && ui.view === 'quadro');
+  const wide = NP_WIDE.matches;
+  const show = can && (wide ? np.open : np.sheet);
+  const panel = $('#np');
+  if (show && !np.loaded){
+    np.loaded = true;
+    panel.insertAdjacentHTML('beforeend', '<iframe class="np-frame" id="npFrame" src="notas/?painel=1" title="Bloco de notas"></iframe>');
+  }
+  panel.hidden = !show;
+  $('#npScrim').hidden = !(show && !wide);
+  const btn = $('#btnNotas');
+  btn.hidden = !can;
+  btn.setAttribute('aria-expanded', String(show));
+  btn.title = show ? 'Recolher o painel de notas' : 'Mostrar o painel de notas';
+  [$('#npBadge'), $('#npBadge2')].forEach(b => { b.hidden = !np.unread; b.textContent = np.unread ? `${np.unread} ${np.unread === 1 ? 'resposta' : 'respostas'}` : ''; });
+  $('#npInfo').textContent = np.loaded ? `${np.todo} para copiar` : '';
+}
+function toggleNotes(on){
+  if (NP_WIDE.matches){ np.open = on === undefined ? !np.open : on; save(NP_STORE, {open: np.open}); }
+  else np.sheet = on === undefined ? !np.sheet : on;
+  syncNotesPanel();
+}
+$('#btnNotas').addEventListener('click', () => toggleNotes());
+document.addEventListener('click', e => { const t = e.target.closest('[data-np]'); if (t && t.dataset.np === 'close') toggleNotes(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && np.sheet && !NP_WIDE.matches){ np.sheet = false; syncNotesPanel(); } });
+if (NP_WIDE.addEventListener) NP_WIDE.addEventListener('change', () => { np.sheet = false; syncNotesPanel(); });
+/* a página do painel avisa quantas notas estão na fila e quantas respostas novas chegaram */
+window.addEventListener('message', e => {
+  const f = $('#npFrame');
+  if (e.origin !== location.origin || !f || e.source !== f.contentWindow || !e.data || e.data.ch !== 'notas') return;
+  np.unread = Number(e.data.unread) || 0; np.todo = Number(e.data.todo) || 0;
+  syncNotesPanel();
 });
 
 /* ---------- início ---------- */
