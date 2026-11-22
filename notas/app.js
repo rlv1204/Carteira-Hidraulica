@@ -317,7 +317,6 @@ function panelState(c){
   const n = comments(c), d = st.det[c.id];
   if (listKey(c) === 'todo') return {cls: 'novo', answered: false, pill: `<span class="pill novo">${n ? 'Continuação na fila' : 'Para copiar'}</span>`};
   const answered = d && d.stamp === stamp(c) ? d.results.length > 0 : n > 0;
-  if (answered && isUnread(c)) return {cls: 'nova', answered, pill: '<span class="dot">Resposta nova</span>'};
   if (answered) return {cls: '', answered, pill: '<span class="pill respondida">Respondida</span>'};
   return {cls: '', answered, pill: '<span class="pill copiada">Aguardando resposta</span>'};
 }
@@ -334,9 +333,8 @@ function renderPanelList(){
   const all = st.cards.filter(matches).sort((a, b) => String(b.dateLastActivity).localeCompare(String(a.dateLastActivity)));
   const shown = all.slice(0, SENT_MAX);
   $('#side').innerHTML = `<h2 class="group">Notas recentes <span class="count num">${all.length}</span></h2>${shown.length ? shown.map(panelItem).join('') : '<p class="fine pad">Nenhuma nota ainda. Escreva acima e salve.</p>'}${all.length > shown.length ? `<p class="fine pad">Mostrando as ${shown.length} mais recentes. As outras estão em Abrir.</p>` : ''}`;
-  const unread = st.cards.filter(c => listKey(c) === 'sent' && panelState(c).cls === 'nova').length;
   const todo = st.cards.filter(c => listKey(c) === 'todo').length;
-  try { window.parent.postMessage({ch: 'notas', unread, todo}, location.origin); } catch(e){}
+  try { window.parent.postMessage({ch: 'notas', unread: 0, todo}, location.origin); } catch(e){}
 }
 function renderList(){
   if (PAINEL){ renderPanelList(); return; }

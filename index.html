@@ -1405,7 +1405,7 @@ function syncNotesPanel(){
   const panel = $('#np');
   if (show && !np.loaded){
     np.loaded = true;
-    panel.insertAdjacentHTML('beforeend', '<iframe class="np-frame" id="npFrame" src="notas/?painel=1" title="Bloco de notas"></iframe>');
+    panel.insertAdjacentHTML('beforeend', '<iframe class="np-frame" id="npFrame" src="notas/?painel=1&v=5" title="Bloco de notas"></iframe>');
   }
   panel.hidden = !show;
   $('#npScrim').hidden = !(show && !wide);
@@ -1413,7 +1413,8 @@ function syncNotesPanel(){
   btn.hidden = !can;
   btn.setAttribute('aria-expanded', String(show));
   btn.title = show ? 'Recolher o painel de notas' : 'Mostrar o painel de notas';
-  [$('#npBadge'), $('#npBadge2')].forEach(b => { b.hidden = !np.unread; b.textContent = np.unread ? `${np.unread} ${np.unread === 1 ? 'resposta' : 'respostas'}` : ''; });
+  const b1 = $('#npBadge'); b1.hidden = !np.todo; b1.textContent = np.todo ? String(np.todo) : '';
+  $('#npBadge2').hidden = true;
   $('#npInfo').textContent = np.loaded ? `${np.todo} para copiar` : '';
 }
 function toggleNotes(on){
