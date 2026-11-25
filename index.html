@@ -378,6 +378,24 @@ button.ring.ok:hover{background:var(--accent)}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
 @media (max-width:520px){.form-grid{grid-template-columns:minmax(0,1fr)}}
 .req{color:var(--late)}
+/* prazo nas checks (@dd/mm no fim do item) */
+.ck div > .ck-name{flex:1;min-width:0;overflow-wrap:anywhere}
+.ck-due{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;border:1px solid var(--line-2);border-radius:4px;padding:0 5px;color:var(--fg-2);white-space:nowrap;line-height:18px;margin-top:0}
+.ck-due.late{border-color:var(--late);color:var(--late)}
+.ck-due.today{border-color:var(--today);color:var(--today)}
+.ck-due.add{border-style:dashed;color:var(--fg-3);font-weight:500}
+.ck .on .ck-due{border-color:var(--line);color:var(--fg-3)}
+.ck-pick{position:relative;display:inline-flex;align-items:center;gap:3px;cursor:pointer}
+.ck-pick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;cursor:pointer;font-size:16px}
+.ck div .ck-due .x-btn{padding:1px;margin:0 -2px 0 1px;opacity:1}
+@media (hover:hover){.ck div .ck-due.add{opacity:0}.ck div:hover .ck-due.add,.ck-due.add:focus-within{opacity:1}}
+.c-ck{margin-left:25px;display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--fg-2);border:1px solid var(--line-2);border-radius:4px;padding:2px 6px;min-width:0}
+.c-ck b{font-weight:700;flex:none;font-variant-numeric:tabular-nums}
+.c-ck .ck-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:var(--fg-2)}
+.c-ck small{flex:none;margin-left:auto;color:var(--fg-3);font-size:11px}
+.c-ck.late{border-color:var(--late);color:var(--late)}
+.c-ck.today{border-color:var(--today);color:var(--today)}
+.add-row .ck-due{line-height:22px}
 </style>
 </head>
 <body>
@@ -511,6 +529,33 @@ function noteISO(d, m){
   if (iso > TODAY) iso = `${y - 1}-${iso.slice(5)}`;
   return iso;
 }
+/* prazo da check: "@dd/mm" (ou "@dd/mm/aa") no fim do texto do item.
+   Sem ano vale o ano atual; data que já passou há mais de 60 dias conta como do ano seguinte. */
+const CK_DUE_RE = /\s*@(\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?\s*$/;
+function ckISO(d, m, y){
+  const yr = y ? Number(y.length === 2 ? '20' + y : y) : Number(TODAY.slice(0, 4));
+  let iso = `${yr}-${pad(Number(m))}-${pad(Number(d))}`;
+  if (addDays(iso, 0) !== iso) return null;
+  if (!y && diffDays(iso) < -60){ iso = `${yr + 1}-${iso.slice(5)}`; if (addDays(iso, 0) !== iso) return null; }
+  return iso;
+}
+function ckParse(raw){
+  const s = String(raw || ''), m = CK_DUE_RE.exec(s);
+  const iso = m ? ckISO(m[1], m[2], m[3]) : null;
+  if (!iso) return {name: s.trim(), due: null};
+  return {name: s.slice(0, m.index).trim() || s.trim(), due: iso};
+}
+function ckToken(iso){
+  const [y, m, d] = iso.split('-');
+  return ckISO(d, m) === iso ? `@${d}/${m}` : `@${d}/${m}/${y.slice(2)}`;
+}
+const ckName = (name, iso) => iso ? `${name} ${ckToken(iso)}` : name;
+function ckState(iso){ const d = diffDays(iso); return d < 0 ? 'late' : d === 0 ? 'today' : d <= 3 ? 'soon' : 'future'; }
+function ckRel(iso){
+  const d = diffDays(iso);
+  if (d < -1) return `vencida há ${-d} dias`; if (d === -1) return 'vencida desde ontem';
+  if (d === 0) return 'vence hoje'; if (d === 1) return 'vence amanhã'; return `vence em ${d} dias`;
+}
 
 /* ---------- utilitários ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -622,13 +667,14 @@ function build(b){
   const cks = new Map();
   (b.checklists || []).slice().sort((x, y) => x.pos - y.pos).forEach(c => {
     if (!cks.has(c.idCard)) cks.set(c.idCard, []);
-    cks.get(c.idCard).push({id: c.id, name: c.name, items: (c.checkItems || []).slice().sort((x, y) => x.pos - y.pos).map(i => ({id: i.id, name: i.name, on: i.state === 'complete'}))});
+    cks.get(c.idCard).push({id: c.id, name: c.name, items: (c.checkItems || []).slice().sort((x, y) => x.pos - y.pos).map(i => { const p = ckParse(i.name); return {id: i.id, name: p.name, raw: i.name, due: p.due, on: i.state === 'complete'}; })});
   });
   const tasks = (b.cards || []).filter(c => listIds.has(c.idList) && !c.closed).map(c => {
     const p = parseDesc(c.desc);
     const roles = (c.idLabels || []).map(id => labels.get(id)).filter(Boolean).map(l => ({l, r: labelRole(l)}));
     const checklists = cks.get(c.id) || [];
     const items = checklists.flatMap(x => x.items);
+    const dated = items.filter(i => !i.on && i.due).sort((a, b) => a.due < b.due ? -1 : a.due > b.due ? 1 : 0);
     return {
       id: c.id, title: c.name, url: c.shortUrl || c.url, listId: c.idList, pos: c.pos, rawDesc: c.desc || '',
       due: c.due ? isoLocal(new Date(c.due)) : null, done: !!c.dueComplete, labelIds: c.idLabels || [],
@@ -639,6 +685,7 @@ function build(b){
       other: roles.filter(x => isPlat(x.r) && !PLATS.some(p => p.id === x.r)).map(x => x.r),
       waiting: p.waiting, refs: p.refs, priority: p.priority, created: p.created, notes: p.notes,
       checklists, ckDone: items.filter(i => i.on).length, ckTotal: items.length,
+      ckNext: dated[0] || null, ckDated: dated.length,
       lastAct: c.dateLastActivity
     };
   });
@@ -756,7 +803,27 @@ function cardHTML(t, opts = {}){
     ${flag}
     ${lastUpdate(t) ? `<div class="c-note">${esc(lastUpdate(t))}</div>` : ''}
     <div class="c-foot">${foot.join('')}</div>
+    ${ckLine(t)}
   </article>`;
+}
+/* próxima check com prazo (só em tarefa aberta); a cor segue o prazo da check, não o lembrete do cartão */
+function ckLine(t){
+  const n = t.ckNext; if (t.done || !n) return '';
+  const s = ckState(n.due), more = t.ckDated - 1;
+  const tip = `Próxima check: ${fmtLong(n.due)} (${ckRel(n.due)}) — ${n.name}${more ? ` · mais ${plural(more, 'check', 'checks')} com prazo` : ''}`;
+  return `<div class="c-ck ${s === 'late' || s === 'today' ? s : ''}" title="${esc(tip)}">${ICON.ck}<b>${esc(ddmm(n.due))}</b><span class="ck-t">${esc(n.name)}</span>${more ? `<small>+${more}</small>` : ''}</div>`;
+}
+/* prazo ao lado de cada check no cartão aberto: toque para escolher a data (grava "@dd/mm" no texto do item) */
+function ckDueHTML(i, w){
+  const s = i.due ? ckState(i.due) : '';
+  const cls = !i.on && (s === 'late' || s === 'today') ? s : '';
+  const tip = i.due ? `Prazo: ${fmtLong(i.due)}${i.on ? '' : ` (${ckRel(i.due)})`}` : 'Dar prazo a esta check';
+  if (!w || i.on) return i.due ? `<span class="ck-due ${cls}" title="${esc(tip)}">${ICON.cal}<span>${esc(fmt(i.due))}</span></span>` : '';
+  return `<span class="ck-due ${i.due ? cls : 'add'}"><label class="ck-pick" title="${esc(tip)}">${ICON.cal}<span>${i.due ? esc(fmt(i.due)) : 'data'}</span><input type="date" class="ck-date" data-act="ck-due" data-item="${esc(i.id)}" value="${i.due || ''}" aria-label="${esc(`${tip}: ${i.name}`)}"></label>${i.due ? `<button type="button" class="x-btn" data-act="ck-due-clear" data-item="${esc(i.id)}" title="Tirar prazo" aria-label="Tirar prazo de ${esc(i.name)}">${ICON.xs}</button>` : ''}</span>`;
+}
+const ckItem = (t, id) => t.checklists.flatMap(c => c.items).find(i => i.id === id);
+function ckSetDue(t, it, iso){
+  return write(iso ? `Prazo da check: ${fmtLong(iso)}` : 'Prazo da check removido', () => api('PUT', `/cards/${t.id}/checkItem/${it.id}`, {name: ckName(it.name, iso)}));
 }
 
 /* ---------- faixa de filtros ---------- */
@@ -946,9 +1013,9 @@ function renderDrawer(){
         ${w ? `<div class="add-row"><select class="inp" id="refTipo" aria-label="Tipo">${REF_TYPES.map(x => `<option>${x}</option>`).join('')}</select><input class="inp" id="refNum" placeholder="Número" autocomplete="off"><button type="button" class="btn" data-act="ref-add">Adicionar</button></div>` : ''}
       </div>
       <div><div class="sec-label">Checklist ${t.ckTotal ? `<span class="num">${t.ckDone}/${t.ckTotal}</span>` : ''}</div>
-        ${t.checklists.map(c => `${t.checklists.length > 1 ? `<div class="fine" style="margin-top:6px">${esc(c.name)}</div>` : ''}<div class="ck">${c.items.map(i => `<div class="${i.on ? 'on' : ''}"><button type="button" class="box" data-act="ck" data-item="${esc(i.id)}" data-on="${i.on}" aria-label="${i.on ? 'Desmarcar' : 'Marcar'}: ${esc(i.name)}" ${dis}>${i.on ? ICON.tick : ''}</button><span>${esc(i.name)}</span>${w ? `<button type="button" class="x-btn" data-act="ck-rm" data-cl="${esc(c.id)}" data-item="${esc(i.id)}" title="Remover item" aria-label="Remover ${esc(i.name)}">${ICON.xs}</button>` : ''}</div>`).join('')}</div>`).join('')}
+        ${t.checklists.map(c => `${t.checklists.length > 1 ? `<div class="fine" style="margin-top:6px">${esc(c.name)}</div>` : ''}<div class="ck">${c.items.map(i => `<div class="${i.on ? 'on' : ''}"><button type="button" class="box" data-act="ck" data-item="${esc(i.id)}" data-on="${i.on}" aria-label="${i.on ? 'Desmarcar' : 'Marcar'}: ${esc(i.name)}" ${dis}>${i.on ? ICON.tick : ''}</button><span class="ck-name">${esc(i.name)}</span>${ckDueHTML(i, w)}${w ? `<button type="button" class="x-btn" data-act="ck-rm" data-cl="${esc(c.id)}" data-item="${esc(i.id)}" title="Remover item" aria-label="Remover ${esc(i.name)}">${ICON.xs}</button>` : ''}</div>`).join('')}</div>`).join('')}
         ${!t.ckTotal && !w ? '<div class="fine" style="margin-top:4px">Sem itens.</div>' : ''}
-        ${w ? `<div class="add-row"><input class="inp" id="ckNew" placeholder="Novo item do checklist" autocomplete="off"><button type="button" class="btn" data-act="ck-add">Adicionar</button></div>` : ''}
+        ${w ? `<div class="add-row"><input class="inp" id="ckNew" placeholder="Novo item do checklist" autocomplete="off"><span class="ck-due add"><label class="ck-pick" title="Prazo do novo item (opcional)">${ICON.cal}<span id="ckNewDueTxt">data</span><input type="date" class="ck-date" id="ckNewDue" aria-label="Prazo do novo item (opcional)"></label></span><button type="button" class="btn" data-act="ck-add">Adicionar</button></div>` : ''}
       </div>
       <div><div class="row" style="justify-content:space-between"><span class="sec-label">Histórico</span>${w ? `<button type="button" class="raw-link" data-act="raw">${ui.raw ? 'Cancelar edição' : 'Editar texto completo'}</button>` : ''}</div>
         ${ui.raw && w ? `<textarea class="inp" id="rawTxt" rows="12" style="margin-top:6px;font-family:ui-monospace,Consolas,monospace;font-size:12px">${esc(t.rawDesc)}</textarea>
@@ -1260,13 +1327,17 @@ async function act(name, el){
     case 'ck': { const on = el.dataset.on !== 'true'; await write(on ? 'Item marcado' : 'Item desmarcado', () => api('PUT', `/cards/${t.id}/checkItem/${el.dataset.item}`, {state: on ? 'complete' : 'incomplete'})); break; }
     case 'ck-add': {
       const inp = $('#ckNew'), txt = inp.value.trim(); if (!txt){ inp.focus(); return; }
-      await write('Item adicionado', async () => {
+      const dv = ($('#ckNewDue') || {}).value || '';
+      const name = dv ? ckName(ckParse(txt).name, dv) : txt;
+      await write(dv ? `Item adicionado com prazo ${fmtLong(dv)}` : 'Item adicionado', async () => {
         let cl = t.checklists[0] && t.checklists[0].id;
         if (!cl){ const c = await api('POST', `/cards/${t.id}/checklists`, {name: 'Checklist'}); cl = c.id; }
-        await api('POST', `/checklists/${cl}/checkItems`, {name: txt, pos: 'bottom'});
+        await api('POST', `/checklists/${cl}/checkItems`, {name, pos: 'bottom'});
       });
       break;
     }
+    case 'ck-due': { const it = ckItem(t, el.dataset.item), v = el.value || null; if (!it || v === it.due) return; await ckSetDue(t, it, v); break; }
+    case 'ck-due-clear': { const it = ckItem(t, el.dataset.item); if (!it || !it.due) return; await ckSetDue(t, it, null); break; }
     case 'ck-rm': await write('Item removido', () => api('DELETE', `/checklists/${el.dataset.cl}/checkItems/${el.dataset.item}`)); break;
     case 'raw': ui.raw = !ui.raw; renderDrawer(); { const r = $('#rawTxt'); if (r) r.focus(); } break;
     case 'raw-save': {
@@ -1309,6 +1380,7 @@ async function createTask(){
 
 /* ---------- eventos ---------- */
 document.addEventListener('click', e => {
+  if (e.target.classList && e.target.classList.contains('ck-date')){ try { e.target.showPicker(); } catch(err){} return; }
   const t = e.target.closest('[data-ring], [data-act], [data-ntplat], button, a, [data-open]'); if (!t) return;
   const ds = t.dataset;
   if (ds.ring){ e.stopPropagation(); const tk = T(ds.ring); if (tk && canWrite()) setDone(tk, !tk.done); return; }
@@ -1343,6 +1415,7 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'waitSel'){ ui.waiting = el.value; render(); return; }
+  if (el.id === 'ckNewDue'){ $('#ckNewDueTxt').textContent = el.value ? fmt(el.value) : 'data'; el.closest('.ck-due').classList.toggle('add', !el.value); return; }
   if (el.dataset && el.dataset.act && el.tagName !== 'BUTTON') act(el.dataset.act, el);
 });
 document.addEventListener('input', e => {
