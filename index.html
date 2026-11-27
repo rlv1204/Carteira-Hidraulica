@@ -705,6 +705,14 @@ function relText(t){
   if (d < -1) return `Atrasada há ${-d} dias`; if (d === -1) return 'Atrasada desde ontem';
   if (d === 0) return 'Vence hoje'; if (d === 1) return 'Vence amanhã'; return `Vence em ${d} dias`;
 }
+/* prazo que puxa a tarefa no quadro: o mais cedo entre o lembrete e a check aberta mais próxima (o lembrete não muda) */
+const ckDueOpen = t => !t.done && t.ckNext ? t.ckNext.due : null;
+function effDue(t){ const c = ckDueOpen(t); return !t.due ? c : !c ? t.due : (c < t.due ? c : t.due); }
+function effState(t){
+  if (t.done) return 'done';
+  const e = effDue(t); if (!e) return 'none';
+  const d = diffDays(e); if (d < 0) return 'late'; if (d === 0) return 'today'; if (d <= 3) return 'soon'; return 'future';
+}
 function stageSince(t){
   for (const l of t.notes){ const m = MOVE_RE.exec(l); if (m){ const iso = noteISO(m[1], m[2]); if (iso) return iso; } }
   return t.created;
@@ -735,11 +743,12 @@ function baseMatch(t){
   return true;
 }
 function quickMatch(t, q){
-  const s = dueState(t);
+  const s = dueState(t), c = ckDueOpen(t);
+  const in7 = x => !!x && diffDays(x) >= 0 && diffDays(x) <= 7;
   switch (q){
-    case 'late': return s === 'late';
-    case 'today': return s === 'today';
-    case 'week': return !t.done && !!t.due && diffDays(t.due) >= 0 && diffDays(t.due) <= 7;
+    case 'late': return effState(t) === 'late';
+    case 'today': return s === 'today' || (!!c && diffDays(c) === 0);
+    case 'week': return !t.done && (in7(t.due) || in7(c));
     case 'none': return s === 'none';
     case 'urg': return !t.done && t.urg;
     case 'and': return !t.done && t.and;
@@ -747,17 +756,24 @@ function quickMatch(t, q){
   }
 }
 const matches = t => baseMatch(t) && (!ui.quick || quickMatch(t, ui.quick));
+function byPrazo(a, b){
+  const ea = effDue(a), eb = effDue(b);
+  if (ea && eb) return ea < eb ? -1 : ea > eb ? 1 : a.title.localeCompare(b.title, 'pt');
+  if (ea) return -1; if (eb) return 1;
+  return (b.created || '').localeCompare(a.created || '');
+}
 function byDue(a, b){
   if (a.due && b.due) return a.due < b.due ? -1 : a.due > b.due ? 1 : a.title.localeCompare(b.title, 'pt');
   if (a.due) return -1; if (b.due) return 1;
   return (b.created || '').localeCompare(a.created || '');
 }
-/* fila de Tarefas pendentes: urgentes, depois lembrete vencido/hoje, depois as mais antigas */
+/* fila de Tarefas pendentes: urgentes, depois lembrete ou check vencido/hoje, depois as mais antigas */
 function byQueue(a, b){
   const u = (b.urg ? 1 : 0) - (a.urg ? 1 : 0); if (u) return u;
-  const ha = !!(a.due && diffDays(a.due) <= 0), hb = !!(b.due && diffDays(b.due) <= 0);
+  const ea = effDue(a), eb = effDue(b);
+  const ha = !!(ea && diffDays(ea) <= 0), hb = !!(eb && diffDays(eb) <= 0);
   if (ha !== hb) return ha ? -1 : 1;
-  if (ha && hb && a.due !== b.due) return a.due < b.due ? -1 : 1;
+  if (ha && hb && ea !== eb) return ea < eb ? -1 : 1;
   return (a.created || '9999').localeCompare(b.created || '9999');
 }
 
@@ -773,14 +789,17 @@ function dueBadge(t){
   return `<span class="due ${cls}" title="${esc(relText(t))}">${ICON.cal}<span class="num">${esc(fmt(t.due))}</span></span>`;
 }
 function cardHTML(t, opts = {}){
-  const s = visState(t);
+  const ds = dueState(t), cs = ckDueOpen(t) ? ckState(t.ckNext.due) : '';
+  let s = visState(t);
+  if (!t.done && s !== 'late' && cs === 'late') s = 'late';
+  else if (!t.done && s !== 'late' && s !== 'urg' && s !== 'today' && cs === 'today') s = 'today';
   const cls = t.done ? 'done' : (s === 'late' || s === 'urg' || s === 'today') ? s : '';
   const l = listOf(t);
   let flag = '';
   if (!t.done){
-    if (s === 'late') flag = `<div class="c-flag late">${esc(relText(t))}</div>`;
+    if (s === 'late') flag = `<div class="c-flag late">${esc(ds === 'late' ? relText(t) : `Check ${ckRel(t.ckNext.due)}`)}</div>`;
     else if (t.urg) flag = `<div class="c-flag urg">${esc(t.priority && /amanh/i.test(t.priority) ? URG : 'Urgente')}</div>`;
-    else if (s === 'today') flag = `<div class="c-flag today">Vence hoje</div>`;
+    else if (s === 'today') flag = `<div class="c-flag today">${ds === 'today' ? 'Vence hoje' : 'Check vence hoje'}</div>`;
   }
   const foot = [dueBadge(t)];
   if (t.waiting) foot.push(`<span class="meta" title="Aguardando">${ICON.wait}${esc(t.waiting)}</span>`);
@@ -861,9 +880,9 @@ function renderBoard(){
   const w = canWrite();
   const cols = board.lists.map(l => {
     const all = board.tasks.filter(t => t.listId === l.id && matches(t));
-    const open = all.filter(t => !t.done).sort(isPend(l) ? byQueue : byDue);
+    const open = all.filter(t => !t.done).sort(isPend(l) ? byQueue : byPrazo);
     const done = all.filter(t => t.done);
-    const late = open.filter(t => dueState(t) === 'late').length;
+    const late = open.filter(t => effState(t) === 'late').length;
     const nextId = isPend(l) && open.length ? open[0].id : null;
     const desc = LIST_DESC[norm(l.name)] || '';
     const doneOpen = ui.doneOpen.has(l.id);
@@ -884,7 +903,7 @@ function renderResumo(){
   const open = board.tasks.filter(t => !t.done && baseMatch(t));
   const cnt = q => open.filter(t => quickMatch(t, q)).length;
   const kpi = (q, cls, label, sub) => `<button type="button" class="kpi ${cls}" data-kpi="${q}"><span>${label}</span><b>${q === 'all' ? open.length : cnt(q)}</b><small>${sub}</small></button>`;
-  const lateOf = arr => arr.filter(t => dueState(t) === 'late').length;
+  const lateOf = arr => arr.filter(t => effState(t) === 'late').length;
   const rows = (items, max) => items.map(it => {
     const on = it.total - it.late;
     const w = v => max ? (v / max * 100) : 0;
